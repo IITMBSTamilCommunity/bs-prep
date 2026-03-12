@@ -14,6 +14,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: "https://bs-prep.vercel.app/sitemap.xml",
+    sitemap: "https://bsprep.in/sitemap.xml",
   }
 }

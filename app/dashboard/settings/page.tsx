@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { User, Lock, CheckCircle } from "lucide-react"
+import { User, Lock, CheckCircle, Trash2, AlertTriangle } from "lucide-react"
 
 export default function SettingsPage() {
   const supabase = createClient()
@@ -24,6 +24,12 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+
+  // Delete account
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteInput, setDeleteInput] = useState("")
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -46,6 +52,20 @@ export default function SettingsPage() {
     }
     load()
   }, [])
+
+  const handleDeleteAccount = async () => {
+    setDeleteError(null)
+    setIsDeletingAccount(true)
+    const res = await fetch('/api/account/delete', { method: 'DELETE' })
+    if (res.ok) {
+      await supabase.auth.signOut()
+      window.location.href = '/'
+    } else {
+      const data = await res.json()
+      setDeleteError(data.error ?? 'Failed to delete account')
+      setIsDeletingAccount(false)
+    }
+  }
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -184,6 +204,65 @@ export default function SettingsPage() {
               {isChangingPassword ? "Updating..." : "Update Password"}
             </Button>
           </form>
+        )}
+      </Card>
+
+      {/* Danger Zone */}
+      <Card className="p-6 bg-white border border-red-200 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center">
+            <Trash2 className="w-5 h-5 text-white" />
+          </div>
+          <h2 className="text-lg font-semibold text-red-700">Delete Account</h2>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-4">
+          Permanently deletes your account and all associated data — profile, enrollments, and everything else. This cannot be undone.
+        </p>
+
+        {!showDeleteConfirm ? (
+          <Button
+            variant="outline"
+            className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            Delete my account
+          </Button>
+        ) : (
+          <div className="space-y-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2 text-red-700">
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span className="text-sm font-medium">Type <strong>DELETE</strong> to confirm</span>
+            </div>
+            <Input
+              placeholder="Type DELETE here"
+              value={deleteInput}
+              onChange={(e) => setDeleteInput(e.target.value)}
+              className="h-11 bg-white border-red-300 focus:border-red-500 text-black"
+            />
+            {deleteError && (
+              <div className="p-3 bg-red-100 border border-red-300 rounded-lg text-sm text-red-700">
+                {deleteError}
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 border-gray-300 text-gray-700"
+                onClick={() => { setShowDeleteConfirm(false); setDeleteInput(""); setDeleteError(null) }}
+                disabled={isDeletingAccount}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                onClick={handleDeleteAccount}
+                disabled={deleteInput !== "DELETE" || isDeletingAccount}
+              >
+                {isDeletingAccount ? "Deleting..." : "Permanently Delete"}
+              </Button>
+            </div>
+          </div>
         )}
       </Card>
     </div>

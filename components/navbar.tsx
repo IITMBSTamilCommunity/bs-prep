@@ -116,7 +116,7 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
 
   return (
     <nav
-      className={`sticky top-0 z-50 bg-[#FEF9E7]/95 backdrop-blur-lg transition-all duration-300 ${
+      className={`sticky top-0 z-50 bg-[#FAF8F5]/95 backdrop-blur-lg transition-all duration-300 ${
         scrolled ? "border-b border-[#E5DBC8] shadow-sm" : "border-b border-[#F0E9D8]"
       }`}
     >

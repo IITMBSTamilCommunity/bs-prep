@@ -22,7 +22,7 @@ const BUNDLE_COURSES = [
     description: "Fundamental math concepts essential for data science",
     thumbnail: "/courses/math.jpg",
     weeks: 4,
-    individualPrice: 349,
+    individualPrice: 499,
     syllabus: [
       { week: 1, title: "Set Theory - Number system, Sets and their operations", topics: "Relations and functions - Relations and their types, Functions and their types" },
       { week: 2, title: "Rectangular coordinate system, Straight Lines", topics: "Slope of a line, Parallel and perpendicular lines, Representations of a Line, General equations of a line, Straight-line fit" },
@@ -36,7 +36,7 @@ const BUNDLE_COURSES = [
     description: "Statistical thinking and analysis from the ground up",
     thumbnail: "/courses/stats.jpg",
     weeks: 4,
-    individualPrice: 349,
+    individualPrice: 499,
     syllabus: [
       { week: 1, title: "Introduction and type of data", topics: "Types of data, Descriptive and Inferential statistics, Scales of measurement" },
       { week: 2, title: "Describing categorical data", topics: "Frequency distribution of categorical data, Best practices for graphing categorical data, Mode and median for categorical variable" },
@@ -50,7 +50,7 @@ const BUNDLE_COURSES = [
     description: "Problem-solving and algorithmic thinking fundamentals",
     thumbnail: "/courses/ct.jpg",
     weeks: 4,
-    individualPrice: 349,
+    individualPrice: 499,
     syllabus: [
       { week: 1, title: "Variables, Initialization, Iterators, Filtering", topics: "Datatypes, Flowcharts, Sanity of data" },
       { week: 2, title: "Iteration, Filtering, Selection", topics: "Pseudocode, Finding max and min, AND operator" },
@@ -60,8 +60,8 @@ const BUNDLE_COURSES = [
   },
 ]
 
-const BUNDLE_PRICE = 999
-const ORIGINAL_PRICE = BUNDLE_COURSES.reduce((s, c) => s + c.individualPrice, 0) // 1047
+const BUNDLE_PRICE = 249
+const ORIGINAL_PRICE = BUNDLE_COURSES.reduce((s, c) => s + c.individualPrice, 0) // 1497
 
 export default function PackageDealPage() {
   const router = useRouter()
@@ -70,6 +70,7 @@ export default function PackageDealPage() {
   const [authChecked, setAuthChecked] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(false)
+  const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" })
 
   useEffect(() => {
@@ -96,10 +97,16 @@ export default function PackageDealPage() {
       alert("Please fill all fields")
       return
     }
+
+    if (!razorpayKeyId) {
+      alert("Razorpay is not configured. Please set NEXT_PUBLIC_RAZORPAY_KEY_ID in .env.local and restart the app.")
+      return
+    }
+
     setLoading(true)
     try {
       const options = {
-        key: "YOUR_RAZORPAY_KEY_ID",
+        key: razorpayKeyId,
         amount: BUNDLE_PRICE * 100,
         currency: "INR",
         name: "BSPrep",
@@ -354,20 +361,6 @@ export default function PackageDealPage() {
                 >
                   {loading ? "Processing..." : `Pay ₹${BUNDLE_PRICE} for All 3 Courses`}
                 </Button>
-
-                {/* Demo enroll */}
-                <div className="mt-3 border border-dashed border-gray-300 rounded-lg p-3">
-                  <p className="text-xs text-center text-gray-400 mb-2 uppercase tracking-widest font-semibold">Testing only</p>
-                  <Button
-                    onClick={handleDemoEnroll}
-                    disabled={loading}
-                    variant="outline"
-                    className="w-full border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-black font-semibold"
-                    suppressHydrationWarning
-                  >
-                    {loading ? "Enrolling..." : "Demo Pay — Enroll in All 3"}
-                  </Button>
-                </div>
 
                 <p className="text-xs text-center text-gray-500 mt-4">
                   By completing this purchase, you agree to our Terms of Service and Privacy Policy

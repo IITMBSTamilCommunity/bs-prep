@@ -17,7 +17,7 @@ const coursePaymentData: Record<string, any> = {
   "qualifier-math-1": {
     title: "Mathematics for Data Science I",
     level: "qualifier",
-    price: 349,
+    price: 99,
     description: "Fundamental mathematics concepts for data science",
     thumbnail: "/courses/math.jpg",
     weeks: 12,
@@ -25,7 +25,7 @@ const coursePaymentData: Record<string, any> = {
   "qualifier-stats-1": {
     title: "Statistics for Data Science I",
     level: "qualifier",
-    price: 349,
+    price: 99,
     description: "Introduction to statistical thinking and analysis",
     thumbnail: "/courses/stats.jpg",
     weeks: 12,
@@ -33,7 +33,7 @@ const coursePaymentData: Record<string, any> = {
   "qualifier-computational-thinking": {
     title: "Computational Thinking",
     level: "qualifier",
-    price: 349,
+    price: 99,
     description: "Problem-solving and algorithmic thinking fundamentals",
     thumbnail: "/courses/ct.jpg",
     weeks: 12,
@@ -49,6 +49,7 @@ export default function PaymentPage() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(false)
+  const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -76,6 +77,11 @@ export default function PaymentPage() {
       return
     }
 
+    if (!razorpayKeyId) {
+      alert('Razorpay is not configured. Please set NEXT_PUBLIC_RAZORPAY_KEY_ID in .env.local and restart the app.')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -97,8 +103,8 @@ export default function PaymentPage() {
       // STEP 2: Initialize Razorpay
       const options = {
         // Get these from Razorpay Dashboard: https://dashboard.razorpay.com/app/website-app-settings/api-keys
-        key: 'YOUR_RAZORPAY_KEY_ID', // Replace with your Razorpay Key ID (starts with rzp_test_ or rzp_live_)
-        amount: course.price * 100, // Amount in paise (₹349 = 34900 paise)
+        key: razorpayKeyId,
+        amount: course.price * 100, // Amount in paise (₹99 = 9900 paise)
         currency: 'INR',
         name: 'IITM BS',
         description: course.title,
@@ -370,20 +376,6 @@ export default function PaymentPage() {
                 >
                   {loading ? "Processing..." : `Pay ₹${course.price}`}
                 </Button>
-
-                {/* Demo enroll — testing only */}
-                <div className="mt-3 border border-dashed border-gray-300 rounded-lg p-3">
-                  <p className="text-xs text-center text-gray-400 mb-2 uppercase tracking-widest font-semibold">Testing only</p>
-                  <Button
-                    onClick={handleDemoEnroll}
-                    disabled={loading}
-                    variant="outline"
-                    className="w-full border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-black font-semibold"
-                    suppressHydrationWarning
-                  >
-                    {loading ? "Enrolling..." : "Demo Pay to Enroll"}
-                  </Button>
-                </div>
 
                 <p className="text-xs text-center text-gray-500 mt-4">
                   By completing this purchase, you agree to our Terms of Service and Privacy Policy

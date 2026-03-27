@@ -109,3 +109,62 @@ export const deleteAccountRateLimiter = new RateLimiter({
   uniqueTokenPerInterval: 500,
   maxRequests: 3 // 3 attempts per hour per IP
 })
+
+export interface RequestRateLimitConfig {
+  maxRequests: number
+  windowMs: number
+  keyPrefix?: string
+}
+
+export interface RequestRateLimitResult {
+  allowed: boolean
+  remaining: number
+  resetTime: number
+}
+
+export async function checkRateLimit(
+  key: string,
+  config: RequestRateLimitConfig
+): Promise<RequestRateLimitResult> {
+  const now = Date.now()
+  const prefixedKey = config.keyPrefix ? `${config.keyPrefix}:${key}` : key
+
+  const existing = store[prefixedKey]
+
+  if (!existing || existing.resetTime < now) {
+    store[prefixedKey] = {
+      count: 1,
+      resetTime: now + config.windowMs,
+    }
+
+    return {
+      allowed: true,
+      remaining: config.maxRequests - 1,
+      resetTime: store[prefixedKey].resetTime,
+    }
+  }
+
+  if (existing.count >= config.maxRequests) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetTime: existing.resetTime,
+    }
+  }
+
+  existing.count += 1
+
+  return {
+    allowed: true,
+    remaining: config.maxRequests - existing.count,
+    resetTime: existing.resetTime,
+  }
+}
+
+export function getRateLimitHeaders(result: RequestRateLimitResult, limit = 100): Record<string, string> {
+  return {
+    "X-RateLimit-Limit": limit.toString(),
+    "X-RateLimit-Remaining": result.remaining.toString(),
+    "X-RateLimit-Reset": Math.ceil(result.resetTime / 1000).toString(),
+  }
+}

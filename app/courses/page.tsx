@@ -44,7 +44,7 @@ const courses: Course[] = [
     weeks: 4,
     description: "Master fundamental math concepts",
     thumbnail: "/courses/math.jpg",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     available: true,
     withCertificate: true
   },
@@ -57,7 +57,7 @@ const courses: Course[] = [
     weeks: 4,
     description: "Learn statistical thinking & analysis",
     thumbnail: "/courses/stats.jpg",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     available: true,
     withCertificate: true
   },
@@ -70,7 +70,7 @@ const courses: Course[] = [
     weeks: 4,
     description: "Build problem-solving skills",
     thumbnail: "/courses/ct.jpg",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     available: true,
     withCertificate: true
   },
@@ -83,7 +83,7 @@ const courses: Course[] = [
     weeks: 4,
     description: "Essential communication skills",
     thumbnail: "/courses/english.jpg",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
   },
@@ -98,7 +98,7 @@ const courses: Course[] = [
     weeks: 12,
     description: "Advanced mathematical concepts",
     thumbnail: "/courses/math.jpg",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
   },
@@ -111,7 +111,7 @@ const courses: Course[] = [
     weeks: 12,
     description: "Advanced statistical methods",
     thumbnail: "/courses/stats.jpg",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
   },
@@ -124,7 +124,7 @@ const courses: Course[] = [
     weeks: 12,
     description: "Python for data analysis",
     thumbnail: "/courses/ct.jpg",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
   },
@@ -137,7 +137,7 @@ const courses: Course[] = [
     weeks: 12,
     description: "Advanced communication skills",
     thumbnail: "/courses/english.jpg",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
   }
@@ -298,9 +298,9 @@ export default function CoursesPage() {
                         {/* Price + CTA */}
                         <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
                           <div className="text-center md:text-right">
-                            <p className="text-xs text-gray-400 line-through">₹1,047 (3 × ₹349)</p>
-                            <p className="text-4xl font-extrabold text-black">₹999</p>
-                            <p className="text-xs text-[#51b206] font-semibold">Save ₹48</p>
+                            <p className="text-xs text-gray-400 line-through">₹1497 (3 × ₹499)</p>
+                            <p className="text-4xl font-extrabold text-black">₹249</p>
+                            <p className="text-xs text-[#51b206] font-semibold">Save ₹1248</p>
                           </div>
                           <span className="inline-block bg-[#51b206] text-white text-sm font-bold px-6 py-2.5 rounded-full group-hover:bg-[#3d8e04] transition-colors">
                             Get Package Deal

@@ -42,7 +42,7 @@
 
 .dark {
   /* Light theme only - same as root */
-  --background: 254 249 231;
+  --background: 254 252 250;
   --foreground: 0 0 0;
   --card: 255 255 255;
   --card-foreground: 0 0 0;
@@ -130,6 +130,15 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     zoom: 100%;
+    background-color: rgb(var(--background));
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1.2px, transparent 1.2px);
+    background-size: 18px 18px;
+    background-attachment: fixed;
+  }
+
+  /* Keep dotted background visible on full-page wrappers that use solid white. */
+  .min-h-screen.bg-white {
+    background-color: transparent !important;
   }
   
   /* Smooth transitions for interactive elements */

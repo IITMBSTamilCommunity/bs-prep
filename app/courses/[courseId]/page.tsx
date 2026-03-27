@@ -30,7 +30,7 @@ const courseSyllabusData: Record<string, any> = {
   "qualifier-math-1": {
     title: "Mathematics for Data Science I",
     level: "qualifier",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     description: "Fundamental mathematics concepts for data science",
     thumbnail: "/courses/math.jpg",
     syllabus: [
@@ -59,7 +59,7 @@ const courseSyllabusData: Record<string, any> = {
   "qualifier-stats-1": {
     title: "Statistics for Data Science I",
     level: "qualifier",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     description: "Introduction to statistical thinking and analysis",
     thumbnail: "/courses/stats.jpg",
     syllabus: [
@@ -88,7 +88,7 @@ const courseSyllabusData: Record<string, any> = {
   "qualifier-computational-thinking": {
     title: "Computational Thinking",
     level: "qualifier",
-    price: 349, originalPrice: 999,
+    price: 99, originalPrice: 499,
     description: "Problem-solving and algorithmic thinking fundamentals",
     thumbnail: "/courses/ct.jpg",
     syllabus: [

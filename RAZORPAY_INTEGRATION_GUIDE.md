@@ -8,19 +8,21 @@
 
 ## 🚀 Quick Start (Client-Side Only - For Testing)
 
-### Step 1: Update Payment Page
-The payment page (`app/payment/[courseId]/page.tsx`) is already set up with Razorpay integration!
+### Step 1: Add Environment Variable
+The payment pages now read Razorpay key from environment variables.
 
-Just replace `YOUR_RAZORPAY_KEY_ID` on line 75 with your actual Razorpay Key ID:
+Add this to `.env.local`:
 
-```typescript
-key: 'rzp_test_XXXXXXXXXXXXXXXX', // Your Test Key ID
+```bash
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_XXXXXXXXXXXXXXXX
 ```
+
+Restart dev server after updating env variables.
 
 ### Step 2: Test Payment
 1. Go to http://localhost:3000/courses/qualifier-math-1
 2. Click "Enroll Now"
-3. Fill the form and click "Pay ₹349"
+3. Fill the form and click "Pay ₹99"
 4. Razorpay payment modal will open
 5. Use test card details (provided by Razorpay in test mode)
 

@@ -7,6 +7,35 @@ import { Navbar } from "@/components/navbar"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+function formatSupabaseError(error: unknown) {
+  if (!error) return null
+
+  if (error instanceof Error) {
+    return { message: error.message }
+  }
+
+  if (typeof error === "object") {
+    const e = error as {
+      message?: string
+      code?: string
+      details?: string
+      hint?: string
+      status?: number
+      name?: string
+    }
+
+    return {
+      message: e.message ?? e.name ?? "Unknown Supabase error",
+      code: e.code,
+      details: e.details,
+      hint: e.hint,
+      status: e.status,
+    }
+  }
+
+  return { message: String(error) }
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -44,7 +73,8 @@ export default function DashboardLayout({
         .maybeSingle()
 
       if (error) {
-        console.error("Error fetching profile:", error)
+        const details = formatSupabaseError(error)
+        console.warn("Profile fetch failed, defaulting to student role:", details)
         // Keep app usable even if role fetch fails for unexpected reasons.
         setRole("student")
         return

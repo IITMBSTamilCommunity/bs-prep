@@ -23,7 +23,9 @@
 	<img src="https://img.shields.io/badge/Razorpay-Secure%20Payments-0c61f7?style=for-the-badge" alt="Razorpay" />
 </p>
 
-## What is BSPrep?
+<div align="center">
+	## What is BSPrep?
+</div>
 
 BSPrep is a full-stack web platform focused on helping IITM BS learners stay consistent and exam-ready in Tamil & English.
 

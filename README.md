@@ -70,13 +70,6 @@ npm run dev
 
 App runs on: http://localhost:3000
 
-## Portfolio Highlights
-
-- Designed and built a production-oriented student platform
-- Implemented secure payment architecture with backend verification
-- Added rate limiting, validation, and RLS-focused data access
-- Built scalable route structure across public, auth, and dashboard flows
-
 ## Disclaimer
 
 This project is an independent student initiative and is not affiliated with or endorsed by IIT Madras.

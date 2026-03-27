@@ -24,7 +24,7 @@
 </p>
 
 <div align="center">
-	## What is BSPrep?
+	<h1>What is BSPrep?</h1>
 </div>
 
 BSPrep is a full-stack web platform focused on helping IITM BS learners stay consistent and exam-ready in Tamil & English.

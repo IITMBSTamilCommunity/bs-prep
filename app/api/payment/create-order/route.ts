@@ -4,10 +4,19 @@ import { verifyUserFromToken } from "@/lib/supabase/server";
 import { validateCourseId, validateAmount } from "@/lib/validation";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "",
-});
+function getRazorpayClient() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    throw new Error("Missing Razorpay server credentials");
+  }
+
+  return new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
+}
 
 // Course pricing (amount in paise)
 const coursePricing: Record<string, number> = {
@@ -75,6 +84,7 @@ export async function POST(request: NextRequest) {
     validateAmount(amount);
 
     // Create Razorpay order
+    const razorpay = getRazorpayClient();
     const order = await razorpay.orders.create({
       amount,
       currency: "INR",

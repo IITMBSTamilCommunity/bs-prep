@@ -5,6 +5,8 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const origin = requestUrl.origin
+  const nextPath = requestUrl.searchParams.get('next') || '/dashboard'
+  const safeNextPath = nextPath.startsWith('/') ? nextPath : '/dashboard'
 
   if (code) {
     const supabase = await createClient()
@@ -44,10 +46,11 @@ export async function GET(request: Request) {
             }
           }
         }
+
       }
       
-      // Successful authentication - redirect to dashboard
-      return NextResponse.redirect(`${origin}/dashboard`)
+      // Successful authentication - redirect to requested local path.
+      return NextResponse.redirect(`${origin}${safeNextPath}`)
     } catch (err) {
       console.error('Unexpected error during auth callback:', err)
       return NextResponse.redirect(`${origin}/?error=authentication_failed`)

@@ -86,7 +86,7 @@ export default function DashboardLayout({
         
         // Redirect admin/mentor to their respective dashboards
         if (profile.role === "admin" && window.location.pathname === "/dashboard") {
-          router.push("/dashboard/admin/users")
+          router.push("/admin")
         } else if (profile.role === "mentor" && window.location.pathname === "/dashboard") {
           router.push("/dashboard/mentor/courses")
         }

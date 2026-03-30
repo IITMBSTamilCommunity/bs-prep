@@ -108,8 +108,14 @@ export async function proxy(request: NextRequest) {
   // Handle Supabase session and authentication
   const response = await updateSession(request)
 
-  // Block unauthenticated access to /dashboard/admin
   if (pathname.startsWith('/dashboard/admin')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/admin/users'
+    return NextResponse.redirect(url)
+  }
+
+  // Block unauthenticated access to admin routes.
+  if (pathname.startsWith('/admin') && pathname !== '/admin/signin') {
     const { createServerClient } = await import('@supabase/ssr')
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -119,17 +125,7 @@ export async function proxy(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       const url = request.nextUrl.clone()
-      url.pathname = '/'
-      return NextResponse.redirect(url)
-    }
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    if (!profile || profile.role !== 'admin') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
+      url.pathname = '/admin/signin'
       return NextResponse.redirect(url)
     }
   }

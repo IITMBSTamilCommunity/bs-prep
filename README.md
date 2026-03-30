@@ -1,5 +1,5 @@
-<p align="center">
-	<img src="public/logo.jpeg" alt="BSPrep Logo" width="90" style = "border-radius: 50px;" />
+<p align="center" style = "border-radius: 50px;">
+	<img src="public/logo.jpeg" alt="BSPrep Logo" width="90"/>
 </p>
 
 <h1 align="center">BSPrep</h1>
@@ -23,15 +23,17 @@
 	<img src="https://img.shields.io/badge/Razorpay-Secure%20Payments-0c61f7?style=for-the-badge" alt="Razorpay" />
 </p>
 
-## Overview
+<div align="center">
+	<h1>What is BSPrep?</h1>
+</div>
 
-BSPrep is a full-stack web platform focused on helping IITM BS learners stay consistent and exam-ready.
+BSPrep is a full-stack web platform focused on helping IITM BS learners stay consistent and exam-ready in Tamil & English.
 
 - Curated course pages and prep paths
 - Quiz prep and learner tools
 - Dashboard with profile and progress workflows
 - Community and support experiences
-- Secure backend-only payment flow
+- Secure backend-only payment flow with Razorpay
 - GPA Calculator with updated details
 
 ## Showcase
@@ -69,13 +71,6 @@ npm run dev
 ```
 
 App runs on: http://localhost:3000
-
-## Portfolio Highlights
-
-- Designed and built a production-oriented student platform
-- Implemented secure payment architecture with backend verification
-- Added rate limiting, validation, and RLS-focused data access
-- Built scalable route structure across public, auth, and dashboard flows
 
 ## Disclaimer
 

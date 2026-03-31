@@ -23,7 +23,7 @@ export async function GET() {
 
   const { data: profileRows, error: profileError } = await service
     .from('profiles')
-    .select('id, first_name, last_name, email, role, created_at, avatar_url')
+    .select('id, first_name, last_name, email, role, created_at, avatar_url, phone')
 
   if (profileError) {
     return NextResponse.json({ error: 'Failed to fetch user profiles' }, { status: 500 })
@@ -41,6 +41,7 @@ export async function GET() {
     full_name: string | null
     role: string
     avatar_url: string | null
+    phone: string | null
     created_at: string
   }> = []
 
@@ -91,6 +92,7 @@ export async function GET() {
         full_name: fullName,
         role: profile?.role || 'user',
         avatar_url: profile?.avatar_url || metadataAvatar,
+        phone: profile?.phone || null,
         created_at: profile?.created_at || authUser.created_at,
       })
     }

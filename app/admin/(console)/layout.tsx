@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { LogOut, Users } from "lucide-react"
+import { BadgeCheck, LayoutDashboard, LogOut, Megaphone, Users } from "lucide-react"
 import { hasAdminRole } from "@/lib/security/admin-role"
 
 type AdminLayoutProps = {
@@ -33,9 +33,27 @@ export default async function AdminConsoleLayout({ children }: AdminLayoutProps)
 
   const navItems = [
     {
+      label: "Overview",
+      href: "/admin",
+      icon: LayoutDashboard,
+      active: true,
+    },
+    {
       label: "Users",
       href: "/admin/users",
       icon: Users,
+      active: true,
+    },
+    {
+      label: "Announcements",
+      href: "/admin/announcements",
+      icon: Megaphone,
+      active: true,
+    },
+    {
+      label: "Admin Details",
+      href: "/admin/details",
+      icon: BadgeCheck,
       active: true,
     },
   ]

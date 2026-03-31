@@ -77,6 +77,7 @@ export default function ProfilePage() {
     full_name: '',
     username: '',
     email: '',
+    phone: '',
     about: '',
     location: '',
     portfolio: '',
@@ -111,6 +112,7 @@ export default function ProfilePage() {
           full_name: data.full_name || '',
           username: data.username || '',
           email: data.email || user.email || '',
+          phone: data.phone || '',
           about: data.about || '',
           location: data.location || '',
           portfolio: data.portfolio || '',
@@ -525,6 +527,16 @@ export default function ProfilePage() {
                     placeholder="City, Country"
                   />
                 </div>
+                <div>
+                  <label className="text-sm text-black/50 mb-1 block">Phone (Optional)</label>
+                  <Input
+                    value={profileData.phone}
+                    onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                    className="bg-black border-slate-700 text-white"
+                    placeholder="Your phone number"
+                    type="tel"
+                  />
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
@@ -540,6 +552,12 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
                       {profileData.location}
+                    </div>
+                  )}
+                  {profileData.phone && (
+                    <div className="flex items-center gap-1">
+                      <Mail className="w-4 h-4" />
+                      {profileData.phone}
                     </div>
                   )}
                   <div className="flex items-center gap-1">

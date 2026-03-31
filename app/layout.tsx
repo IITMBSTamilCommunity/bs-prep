@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Suspense } from "react"
 import Script from "next/script"
 import { Urbanist } from "next/font/google"
@@ -27,12 +27,13 @@ export const metadata: Metadata = {
     icon: "/logo.jpeg",
     apple: "/logo.jpeg",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1.0,
-    maximumScale: 5,
-    userScalable: true,
-  },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
 }
 
 export default function RootLayout({

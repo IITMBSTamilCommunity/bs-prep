@@ -17,6 +17,9 @@ export default function SettingsPage() {
   const [lastName, setLastName] = useState("")
   const [role, setRole] = useState("")
   const [loadingProfile, setLoadingProfile] = useState(true)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [profileSuccess, setProfileSuccess] = useState(false)
 
   // Password change
   const [newPassword, setNewPassword] = useState("")
@@ -34,7 +37,10 @@ export default function SettingsPage() {
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        setLoadingProfile(false)
+        return
+      }
       setEmail(user.email ?? "")
 
       const { data: profile } = await supabase
@@ -52,6 +58,35 @@ export default function SettingsPage() {
     }
     load()
   }, [])
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setProfileError(null)
+    setProfileSuccess(false)
+    setIsSavingProfile(true)
+
+    const res = await fetch("/api/account/profile", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      setProfileError(data.error || "Failed to update profile")
+      setIsSavingProfile(false)
+      return
+    }
+
+    setProfileSuccess(true)
+    setIsSavingProfile(false)
+  }
 
   const handleDeleteAccount = async () => {
     setDeleteError(null)
@@ -114,19 +149,27 @@ export default function SettingsPage() {
             ))}
           </div>
         ) : (
-          <div className="space-y-4">
+          <form onSubmit={handleSaveProfile} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label className="text-sm font-medium text-gray-500">First Name</Label>
-                <div className="h-11 px-3 flex items-center bg-gray-50 border border-gray-200 rounded-lg text-black">
-                  {firstName || "—"}
-                </div>
+                <Label htmlFor="first-name" className="text-sm font-medium text-gray-500">First Name</Label>
+                <Input
+                  id="first-name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="Enter first name"
+                  className="h-11 bg-white border-gray-300 focus:border-black text-black"
+                />
               </div>
               <div className="space-y-1">
-                <Label className="text-sm font-medium text-gray-500">Last Name</Label>
-                <div className="h-11 px-3 flex items-center bg-gray-50 border border-gray-200 rounded-lg text-black">
-                  {lastName || "—"}
-                </div>
+                <Label htmlFor="last-name" className="text-sm font-medium text-gray-500">Last Name</Label>
+                <Input
+                  id="last-name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Enter last name"
+                  className="h-11 bg-white border-gray-300 focus:border-black text-black"
+                />
               </div>
             </div>
             <div className="space-y-1">
@@ -141,7 +184,26 @@ export default function SettingsPage() {
                 {role || "student"}
               </div>
             </div>
-          </div>
+
+            {profileError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {profileError}
+              </div>
+            )}
+            {profileSuccess && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+                Profile updated successfully.
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isSavingProfile}
+              className="w-full h-11 bg-black hover:bg-black/80 text-white font-semibold"
+            >
+              {isSavingProfile ? "Saving..." : "Save Profile"}
+            </Button>
+          </form>
         )}
       </Card>
 

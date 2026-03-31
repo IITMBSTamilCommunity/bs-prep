@@ -5,7 +5,8 @@ import { useEffect, useState } from "react"
 type Announcement = {
   id: number
   title: string
-  content: string
+  message: string
+  content?: string
   created_at: string
 }
 
@@ -47,7 +48,7 @@ export default function AnnouncementsPage() {
           className="border rounded-lg p-4"
         >
           <h2 className="font-semibold text-lg">{a.title}</h2>
-          <p className="mt-1">{a.content}</p>
+          <p className="mt-1">{a.message || a.content || ""}</p>
           <p className="text-sm text-gray-500 mt-2">
             {new Date(a.created_at).toLocaleString()}
           </p>

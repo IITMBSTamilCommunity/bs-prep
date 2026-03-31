@@ -32,7 +32,9 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [upcomingClasses, setUpcomingClasses] = useState<any[]>([])
+  const [announcements, setAnnouncements] = useState<any[]>([])
   const [seenIds, setSeenIds] = useState<string[]>([])
+  const [seenAnnouncementIds, setSeenAnnouncementIds] = useState<string[]>([])
   const router = useRouter()
   const supabase = createClient()
 
@@ -49,12 +51,15 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
 
   // Build a stable ID for a class notification
   const notifId = (cls: any) => `${cls.course}-${cls.date}-${cls.time}`
+  const announcementNotifId = (a: any) => `announcement-${a.id}`
 
   // Load seen IDs from localStorage
   useEffect(() => {
     try {
       const stored = localStorage.getItem('bsprep_seen_notifs')
       if (stored) setSeenIds(JSON.parse(stored))
+      const storedAnnouncements = localStorage.getItem('bsprep_seen_announcements')
+      if (storedAnnouncements) setSeenAnnouncementIds(JSON.parse(storedAnnouncements))
     } catch {}
   }, [])
 
@@ -83,13 +88,40 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
     return () => clearInterval(interval)
   }, [isAuthenticated])
 
-  const unreadCount = upcomingClasses.filter(cls => !seenIds.includes(notifId(cls))).length
+  // Fetch announcements for notification dropdown
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const loadAnnouncements = async () => {
+      try {
+        const res = await fetch('/api/announcements')
+        if (!res.ok) return
+        const data = await res.json()
+        setAnnouncements(Array.isArray(data) ? data : [])
+      } catch {}
+    }
+
+    loadAnnouncements()
+    const interval = setInterval(loadAnnouncements, 60_000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated])
+
+  const unreadClassCount = upcomingClasses.filter(cls => !seenIds.includes(notifId(cls))).length
+  const unreadAnnouncementCount = announcements.filter(a => !seenAnnouncementIds.includes(announcementNotifId(a))).length
+  const unreadCount = unreadClassCount + unreadAnnouncementCount
 
   const markAllSeen = () => {
-    const ids = upcomingClasses.map(notifId)
-    const merged = Array.from(new Set([...seenIds, ...ids]))
-    setSeenIds(merged)
-    try { localStorage.setItem('bsprep_seen_notifs', JSON.stringify(merged)) } catch {}
+    const classIds = upcomingClasses.map(notifId)
+    const mergedClassIds = Array.from(new Set([...seenIds, ...classIds]))
+    setSeenIds(mergedClassIds)
+
+    const announcementIds = announcements.map(announcementNotifId)
+    const mergedAnnouncementIds = Array.from(new Set([...seenAnnouncementIds, ...announcementIds]))
+    setSeenAnnouncementIds(mergedAnnouncementIds)
+
+    try {
+      localStorage.setItem('bsprep_seen_notifs', JSON.stringify(mergedClassIds))
+      localStorage.setItem('bsprep_seen_announcements', JSON.stringify(mergedAnnouncementIds))
+    } catch {}
   }
 
   const handleNotifOpen = (open: boolean) => {
@@ -245,16 +277,49 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                   <DropdownMenuContent align="end" className="w-80 bg-white border-gray-200 shadow-xl p-0 overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                       <span className="font-bold text-black text-sm">Notifications</span>
-                      {upcomingClasses.length > 0 && (
-                        <span className="text-xs text-gray-500">{upcomingClasses.length} upcoming</span>
+                      {(upcomingClasses.length > 0 || announcements.length > 0) && (
+                        <span className="text-xs text-gray-500">{upcomingClasses.length + announcements.length} items</span>
                       )}
                     </div>
-                    {upcomingClasses.length === 0 ? (
+                    {upcomingClasses.length === 0 && announcements.length === 0 ? (
                       <div className="px-4 py-8 text-center text-sm text-gray-400">
-                        No upcoming classes
+                        No notifications yet
                       </div>
                     ) : (
                       <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                        {announcements.slice(0, 3).map((announcement) => {
+                          const id = announcementNotifId(announcement)
+                          const isUnseen = !seenAnnouncementIds.includes(id)
+                          const createdAt = announcement.created_at ? new Date(announcement.created_at) : null
+                          return (
+                            <div key={id} className={`px-4 py-3 flex items-start gap-3 ${isUnseen ? 'bg-red-50' : 'bg-white'}`}>
+                              <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${isUnseen ? 'bg-red-500' : 'bg-gray-300'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-0.5">Announcement</p>
+                                <p className="text-sm font-semibold text-black leading-snug">{announcement.title}</p>
+                                <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{announcement.message || announcement.content || ''}</p>
+                                {createdAt ? (
+                                  <p className="text-xs text-gray-500 mt-1">{createdAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
+                                ) : null}
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                        {announcements.length > 3 && (
+                          <div className="px-4 py-2 bg-white">
+                            <Link href="/announcements" className="text-xs font-semibold text-blue-700 hover:underline" onClick={() => setNotifOpen(false)}>
+                              View all announcements
+                            </Link>
+                          </div>
+                        )}
+
+                        {announcements.length > 0 && upcomingClasses.length > 0 && (
+                          <div className="px-4 py-1 bg-gray-50 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                            Live Classes
+                          </div>
+                        )}
+
                         {upcomingClasses.map((cls, i) => {
                           const id = notifId(cls)
                           const isUnseen = !seenIds.includes(id)

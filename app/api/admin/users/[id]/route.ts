@@ -3,7 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { hasAdminRole } from '@/lib/security/admin-role'
 import { writeRateLimiter } from '@/lib/rate-limit'
-import { validateAndSanitizeInput, validateEmail } from '@/lib/security/validation'
+import { validateAndSanitizeInput } from '@/lib/security/validation'
 
 type Params = {
   params: Promise<{ id: string }>
@@ -58,7 +58,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
 
     const body = JSON.parse(text)
-    const { first_name, last_name, email, phone } = body
+    const { first_name, last_name, phone } = body
 
     // Validate inputs
     const updates: Record<string, unknown> = {}
@@ -107,48 +107,6 @@ export async function PUT(req: NextRequest, { params }: Params) {
         }
         updates.phone = phoneValidation.sanitized
       }
-    }
-
-    // If email is being updated, we need to use admin client
-    if (email !== undefined) {
-      if (!validateEmail(email)) {
-        return NextResponse.json(
-          { error: 'Invalid email format' },
-          { status: 400 }
-        )
-      }
-
-      const service = createServiceRoleClient()
-
-      // Check if email already exists (excluding current user)
-      const { data: existingUser } = await service
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle()
-
-      if (existingUser && existingUser.id !== userId) {
-        return NextResponse.json(
-          { error: 'Email already in use' },
-          { status: 409 }
-        )
-      }
-
-      // Update auth user email
-      const { error: authError } = await service.auth.admin.updateUserById(userId, {
-        email: email.toLowerCase(),
-      })
-
-      if (authError) {
-        console.error('Failed to update user email:', authError)
-        return NextResponse.json(
-          { error: 'Failed to update email' },
-          { status: 500 }
-        )
-      }
-
-      // Update profile email
-      updates.email = email.toLowerCase()
     }
 
     // Update profile in database

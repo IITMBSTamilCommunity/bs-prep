@@ -8,6 +8,7 @@ type Announcement = {
   message: string
   content?: string
   announcement_type?: string
+  display_hours?: number | null
   created_by_email?: string | null
   created_at: string
 }
@@ -17,28 +18,14 @@ const ANNOUNCEMENT_TYPES = ['Live Classes', 'YouTube Videos', 'Announcements', '
 function getAnnouncementTypeColor(type?: string): string {
   switch (type) {
     case 'Live Classes':
-      return 'border-purple-500/40 bg-purple-500/10 text-purple-300'
+      return 'border-amber-500/40 bg-amber-500/10 text-amber-300'
     case 'YouTube Videos':
       return 'border-red-500/40 bg-red-500/10 text-red-300'
     case 'Announcements':
-      return 'border-blue-500/40 bg-blue-500/10 text-blue-300'
+      return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
     default:
       return 'border-white/20 bg-white/5 text-slate-300'
   }
-}
-
-function toInputDateTime(value?: string): string {
-  if (!value) {
-    return ""
-  }
-
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return ""
-  }
-
-  const offsetMs = parsed.getTimezoneOffset() * 60 * 1000
-  return new Date(parsed.getTime() - offsetMs).toISOString().slice(0, 16)
 }
 
 export default function AdminAnnouncementsPage() {
@@ -48,14 +35,14 @@ export default function AdminAnnouncementsPage() {
   const [title, setTitle] = useState("")
   const [messageText, setMessageText] = useState("")
   const [announcementType, setAnnouncementType] = useState<string>("General")
-  const [date, setDate] = useState("")
+  const [displayHours, setDisplayHours] = useState("24")
   const [loadingCreate, setLoadingCreate] = useState(false)
 
   const [editingId, setEditingId] = useState<string | number | null>(null)
   const [editTitle, setEditTitle] = useState("")
   const [editMessage, setEditMessage] = useState("")
   const [editAnnouncementType, setEditAnnouncementType] = useState<string>("General")
-  const [editDate, setEditDate] = useState("")
+  const [editDisplayHours, setEditDisplayHours] = useState("24")
   const [loadingEdit, setLoadingEdit] = useState(false)
 
   const [deletingId, setDeletingId] = useState<string | number | null>(null)
@@ -64,7 +51,7 @@ export default function AdminAnnouncementsPage() {
   async function loadAnnouncements() {
     setLoadingList(true)
     try {
-      const res = await fetch("/api/announcements", { cache: "no-store" })
+      const res = await fetch("/api/announcements?includeExpired=1", { cache: "no-store" })
       const data = await res.json()
 
       if (!res.ok) {
@@ -98,7 +85,7 @@ export default function AdminAnnouncementsPage() {
         title,
         message: messageText,
         announcement_type: announcementType,
-        date,
+        display_hours: Number(displayHours),
       }),
     })
 
@@ -111,7 +98,7 @@ export default function AdminAnnouncementsPage() {
       setTitle("")
       setMessageText("")
       setAnnouncementType("General")
-      setDate("")
+      setDisplayHours("24")
       await loadAnnouncements()
     }
 
@@ -123,7 +110,7 @@ export default function AdminAnnouncementsPage() {
     setEditTitle(announcement.title)
     setEditMessage(announcement.message || announcement.content || "")
     setEditAnnouncementType(announcement.announcement_type || "General")
-    setEditDate(toInputDateTime(announcement.created_at))
+    setEditDisplayHours(String(announcement.display_hours ?? 24))
     setStatusMessage("")
   }
 
@@ -132,7 +119,7 @@ export default function AdminAnnouncementsPage() {
     setEditTitle("")
     setEditMessage("")
     setEditAnnouncementType("General")
-    setEditDate("")
+    setEditDisplayHours("24")
   }
 
   async function handleUpdate(e: FormEvent) {
@@ -153,7 +140,7 @@ export default function AdminAnnouncementsPage() {
         title: editTitle,
         message: editMessage,
         announcement_type: editAnnouncementType,
-        date: editDate,
+        display_hours: Number(editDisplayHours),
       }),
     })
 
@@ -197,7 +184,7 @@ export default function AdminAnnouncementsPage() {
     <div className="space-y-6">
       <header>
         <h1 className="text-4xl font-semibold uppercase italic tracking-tight text-white">Announcements</h1>
-        <p className="mt-1 text-sm text-slate-400">Create, edit, and schedule announcement messages.</p>
+        <p className="mt-1 text-sm text-slate-400">Create and edit announcements with visibility duration in hours.</p>
       </header>
 
       <section className="rounded-2xl border border-white/10 bg-[#070c15] p-5">
@@ -233,17 +220,20 @@ export default function AdminAnnouncementsPage() {
           />
 
           <input
-            type="datetime-local"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
+            type="number"
+            min={1}
+            max={720}
+            value={displayHours}
+            onChange={(e) => setDisplayHours(e.target.value)}
             required
-            className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none"
+            placeholder="Show in dashboard for hours (e.g. 24)"
+            className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none placeholder:text-slate-500"
           />
 
           <button
             type="submit"
             disabled={loadingCreate}
-            className="rounded-lg border border-blue-400/40 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loadingCreate ? "Posting..." : "Post Announcement"}
           </button>
@@ -266,6 +256,7 @@ export default function AdminAnnouncementsPage() {
               </div>
               <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap">{a.message || a.content || ""}</p>
               <p className="mt-2 text-xs text-slate-500">{new Date(a.created_at).toLocaleString()}</p>
+              <p className="mt-1 text-xs text-slate-500">Visible for: {a.display_hours ?? 24} hour(s)</p>
               <p className="mt-1 text-xs text-slate-500">Created by: {a.created_by_email || "Admin"}</p>
               <div className="mt-3 flex gap-2">
                 <button
@@ -323,11 +314,14 @@ export default function AdminAnnouncementsPage() {
             />
 
             <input
-              type="datetime-local"
-              value={editDate}
-              onChange={(e) => setEditDate(e.target.value)}
+              type="number"
+              min={1}
+              max={720}
+              value={editDisplayHours}
+              onChange={(e) => setEditDisplayHours(e.target.value)}
               required
-              className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none"
+              placeholder="Show in dashboard for hours"
+              className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none placeholder:text-slate-500"
             />
 
             <div className="flex gap-2">

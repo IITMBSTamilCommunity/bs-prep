@@ -78,7 +78,8 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // Get the user to be deleted
     const service = createServiceRoleClient()
-    const { data: targetUser, error: userError } = await service.auth.admin.getUserById(userId)
+    const { data: targetUserData, error: userError } = await service.auth.admin.getUserById(userId)
+    const targetUser = targetUserData?.user
 
     if (userError || !targetUser) {
       return NextResponse.json(
@@ -87,19 +88,12 @@ export async function POST(req: NextRequest, { params }: Params) {
       )
     }
 
-    // Check if target user is an admin - admins cannot delete other admins
+    // Load profile for display name in OTP messaging
     const { data: targetProfile } = await service
       .from('profiles')
       .select('role, first_name, last_name')
       .eq('id', userId)
       .maybeSingle()
-
-    if (targetProfile?.role === 'admin') {
-      return NextResponse.json(
-        { error: 'Cannot delete admin accounts. Only general users can be deleted.' },
-        { status: 403 }
-      )
-    }
 
     // Generate OTP
     const otp = generateOTP()

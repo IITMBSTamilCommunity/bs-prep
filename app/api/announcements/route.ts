@@ -5,17 +5,39 @@ import { apiRateLimiter, writeRateLimiter } from "@/lib/rate-limit"
 import { hasAdminRole } from "@/lib/security/admin-role"
 import { sendAnnouncementCreatedEmail } from "@/lib/notifications/announcement-email"
 
-function parseAnnouncementDate(dateInput: unknown): string | null {
-  if (!dateInput || typeof dateInput !== "string") {
+function parseDisplayHours(value: unknown): number | null {
+  if (value === undefined || value === null || value === "") {
+    return 24
+  }
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 1 || parsed > 720) {
     return null
   }
 
-  const parsed = new Date(dateInput)
-  if (Number.isNaN(parsed.getTime())) {
-    return null
+  return Math.floor(parsed)
+}
+
+function isAnnouncementActive(item: Record<string, unknown>): boolean {
+  const createdAtRaw = item.created_at
+  const displayHoursRaw = item.display_hours
+
+  if (!createdAtRaw || typeof createdAtRaw !== "string") {
+    return true
   }
 
-  return parsed.toISOString()
+  const createdAt = new Date(createdAtRaw)
+  if (Number.isNaN(createdAt.getTime())) {
+    return true
+  }
+
+  const displayHours = typeof displayHoursRaw === "number" ? displayHoursRaw : Number(displayHoursRaw)
+  if (!Number.isFinite(displayHours) || displayHours <= 0) {
+    return true
+  }
+
+  const expiresAt = createdAt.getTime() + displayHours * 60 * 60 * 1000
+  return Date.now() <= expiresAt
 }
 
 function isMissingColumnError(error: unknown, columnName: string): boolean {
@@ -50,6 +72,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
   try {
+    const includeExpired = request.nextUrl.searchParams.get("includeExpired") === "1"
     const supabase = await createClient()
     
     const { data, error } = await supabase
@@ -98,7 +121,9 @@ export async function GET(request: NextRequest) {
         null,
     }))
 
-    return NextResponse.json(normalized)
+    const filtered = includeExpired ? normalized : normalized.filter((item) => isAnnouncementActive(item))
+
+    return NextResponse.json(filtered)
   } catch (err) {
     console.error('Unexpected error:', err)
     return NextResponse.json(
@@ -177,10 +202,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const parsedDate = parseAnnouncementDate(body.date)
-    if (body.date && !parsedDate) {
+    const parsedDisplayHours = parseDisplayHours(body.display_hours)
+    if (parsedDisplayHours === null) {
       return NextResponse.json(
-        { error: "Invalid date format" },
+        { error: "Invalid display hours. Enter a value between 1 and 720." },
         { status: 400 }
       )
     }
@@ -202,7 +227,7 @@ export async function POST(req: NextRequest) {
       message: messageValidation.sanitized,
       created_by: user.id,
       created_by_email: user.email ?? null,
-      ...(parsedDate ? { created_at: parsedDate } : {}),
+      display_hours: parsedDisplayHours,
     }
 
     // Include announcement_type if it's valid (handle DB schema differences)
@@ -213,7 +238,7 @@ export async function POST(req: NextRequest) {
     const payloadWithoutCreator: Record<string, unknown> = {
       title: titleValidation.sanitized,
       message: messageValidation.sanitized,
-      ...(parsedDate ? { created_at: parsedDate } : {}),
+      display_hours: parsedDisplayHours,
     }
 
     // Include announcement_type in payload without creator too
@@ -227,11 +252,16 @@ export async function POST(req: NextRequest) {
       .select()
 
     // If column doesn't exist in DB yet, retry without it
-    if (error && (isMissingColumnError(error, "created_by_email") || isMissingColumnError(error, "created_by") || isMissingColumnError(error, "announcement_type"))) {
+    if (
+      error &&
+      (isMissingColumnError(error, "created_by_email") ||
+        isMissingColumnError(error, "created_by") ||
+        isMissingColumnError(error, "announcement_type") ||
+        isMissingColumnError(error, "display_hours"))
+    ) {
       const fallbackPayload = {
         title: titleValidation.sanitized,
         message: messageValidation.sanitized,
-        ...(parsedDate ? { created_at: parsedDate } : {}),
       }
       const retry = await adminClient.from("announcements").insert([fallbackPayload]).select()
       data = retry.data

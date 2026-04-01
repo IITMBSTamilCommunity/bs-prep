@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server"
 import { hasAdminRole } from "@/lib/security/admin-role"
-import { validateAndSanitizeInput, validateEmail } from "@/lib/security/validation"
+import { validateAndSanitizeInput } from "@/lib/security/validation"
 
 async function verifyAdmin() {
   const supabase = await createClient()
@@ -57,7 +57,6 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json()
     const firstNameRaw = typeof body?.first_name === "string" ? body.first_name : ""
     const lastNameRaw = typeof body?.last_name === "string" ? body.last_name : ""
-    const emailRaw = typeof body?.email === "string" ? body.email.trim() : ""
 
     const firstNameValidation = validateAndSanitizeInput(firstNameRaw, 100)
     const lastNameValidation = validateAndSanitizeInput(lastNameRaw, 100)
@@ -69,18 +68,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Invalid last name" }, { status: 400 })
     }
 
-    if (emailRaw && !validateEmail(emailRaw)) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 })
-    }
-
     const service = createServiceRoleClient()
     const updatePayload: Record<string, string | null> = {
       first_name: firstNameValidation.sanitized || null,
       last_name: lastNameValidation.sanitized || null,
-    }
-
-    if (emailRaw) {
-      updatePayload.email = emailRaw
     }
 
     const { data: profile, error: updateError } = await service

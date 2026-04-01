@@ -136,20 +136,6 @@ export async function POST(req: NextRequest, { params }: Params) {
       )
     }
 
-    // Check if target user is an admin - final check
-    const { data: targetProfile } = await service
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .maybeSingle()
-
-    if (targetProfile?.role === 'admin') {
-      return NextResponse.json(
-        { error: 'Cannot delete admin accounts.' },
-        { status: 403 }
-      )
-    }
-
     // Delete user data in correct order (respecting FK constraints)
     // 1. Delete enrollments
     await service.from('enrollments').delete().eq('user_id', userId)

@@ -16,17 +16,26 @@ function coerceAnnouncementId(id: string): string | number {
   return /^\d+$/.test(id) ? Number(id) : id
 }
 
-function parseAnnouncementDate(dateInput: unknown): string | null {
-  if (!dateInput || typeof dateInput !== "string") {
+function parseDisplayHours(value: unknown): number | null {
+  if (value === undefined || value === null || value === "") {
+    return 24
+  }
+
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 1 || parsed > 720) {
     return null
   }
 
-  const parsed = new Date(dateInput)
-  if (Number.isNaN(parsed.getTime())) {
-    return null
+  return Math.floor(parsed)
+}
+
+function isMissingColumnError(error: unknown, columnName: string): boolean {
+  if (!error || typeof error !== "object") {
+    return false
   }
 
-  return parsed.toISOString()
+  const e = error as { code?: string; message?: string }
+  return e.code === "PGRST204" && (e.message || "").includes(`'${columnName}'`)
 }
 
 // Valid announcement types
@@ -116,9 +125,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
       )
     }
 
-    const parsedDate = parseAnnouncementDate(body.date)
-    if (body.date && !parsedDate) {
-      return NextResponse.json({ error: "Invalid date format" }, { status: 400 })
+    const parsedDisplayHours = parseDisplayHours(body.display_hours)
+    if (parsedDisplayHours === null) {
+      return NextResponse.json({ error: "Invalid display hours. Enter a value between 1 and 720." }, { status: 400 })
     }
 
     // Validate announcement type
@@ -130,22 +139,37 @@ export async function PUT(req: NextRequest, { params }: Params) {
       )
     }
 
-    const updatePayload: Record<string, string> = {
+    const updatePayload: Record<string, string | number> = {
       title: titleValidation.sanitized,
       message: messageValidation.sanitized,
       announcement_type: typeValidation.type,
+      display_hours: parsedDisplayHours,
     }
 
-    if (parsedDate) {
-      updatePayload.created_at = parsedDate
-    }
-
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("announcements")
       .update(updatePayload)
       .eq("id", announcementId)
       .select()
       .single()
+
+    if (error && isMissingColumnError(error, "display_hours")) {
+      const fallbackPayload = {
+        title: titleValidation.sanitized,
+        message: messageValidation.sanitized,
+        announcement_type: typeValidation.type,
+      }
+
+      const retry = await supabase
+        .from("announcements")
+        .update(fallbackPayload)
+        .eq("id", announcementId)
+        .select()
+        .single()
+
+      data = retry.data
+      error = retry.error
+    }
 
     if (error) {
       console.error("Announcement update error:", error)

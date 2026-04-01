@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
+import { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { hasAdminRole } from '@/lib/security/admin-role'
 
@@ -14,10 +15,12 @@ async function verifyAdmin() {
   return { user, supabase, error: null }
 }
 
-// GET /api/admin/users — list all users
-export async function GET() {
+// GET /api/admin/users — list users (supports email search via ?email=)
+export async function GET(request: NextRequest) {
   const { error } = await verifyAdmin()
   if (error) return NextResponse.json({ error }, { status: error === 'Unauthorized' ? 401 : 403 })
+
+  const searchEmail = request.nextUrl.searchParams.get('email')?.trim().toLowerCase() || ''
 
   const service = createServiceRoleClient()
 
@@ -106,5 +109,9 @@ export async function GET() {
 
   allUsers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-  return NextResponse.json({ users: allUsers })
+  const filteredUsers = searchEmail
+    ? allUsers.filter((u) => u.email.toLowerCase().includes(searchEmail))
+    : allUsers
+
+  return NextResponse.json({ users: filteredUsers })
 }

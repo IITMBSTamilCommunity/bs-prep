@@ -32,7 +32,7 @@ export async function GET() {
     const service = createServiceRoleClient()
     const { data: profile, error: profileError } = await service
       .from("profiles")
-      .select("id, email, first_name, last_name, role, created_at")
+      .select("id, email, first_name, last_name, role, created_at, avatar_url")
       .eq("id", user!.id)
       .maybeSingle()
 
@@ -40,7 +40,21 @@ export async function GET() {
       return NextResponse.json({ error: "Failed to load profile" }, { status: 500 })
     }
 
-    return NextResponse.json({ profile })
+    const metadataAvatar =
+      typeof user!.user_metadata?.avatar_url === "string"
+        ? user!.user_metadata.avatar_url
+        : typeof user!.user_metadata?.picture === "string"
+          ? user!.user_metadata.picture
+          : null
+
+    const profileWithAvatar = profile
+      ? {
+          ...profile,
+          avatar_url: profile.avatar_url || metadataAvatar,
+        }
+      : profile
+
+    return NextResponse.json({ profile: profileWithAvatar })
   } catch (err) {
     console.error("Admin me GET error:", err)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -78,14 +92,26 @@ export async function PATCH(request: NextRequest) {
       .from("profiles")
       .update(updatePayload)
       .eq("id", user!.id)
-      .select("id, email, first_name, last_name, role, created_at")
+      .select("id, email, first_name, last_name, role, created_at, avatar_url")
       .single()
 
     if (updateError) {
       return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, profile })
+    const metadataAvatar =
+      typeof user!.user_metadata?.avatar_url === "string"
+        ? user!.user_metadata.avatar_url
+        : typeof user!.user_metadata?.picture === "string"
+          ? user!.user_metadata.picture
+          : null
+
+    const profileWithAvatar = {
+      ...profile,
+      avatar_url: profile.avatar_url || metadataAvatar,
+    }
+
+    return NextResponse.json({ success: true, profile: profileWithAvatar })
   } catch (err) {
     console.error("Admin me PATCH error:", err)
     return NextResponse.json({ error: "Invalid request" }, { status: 400 })

@@ -11,6 +11,7 @@ type AdminProfile = {
   last_name: string | null
   role: string
   created_at: string
+  avatar_url: string | null
 }
 
 export default function AdminDetailsPage() {
@@ -24,11 +25,6 @@ export default function AdminDetailsPage() {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [profileSaving, setProfileSaving] = useState(false)
-
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [passwordSaving, setPasswordSaving] = useState(false)
-  const [passwordMessage, setPasswordMessage] = useState("")
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteInput, setDeleteInput] = useState("")
@@ -92,34 +88,6 @@ export default function AdminDetailsPage() {
     }
   }
 
-  async function handlePasswordChange(event: FormEvent) {
-    event.preventDefault()
-    setPasswordMessage("")
-
-    if (newPassword.length < 6) {
-      setPasswordMessage("Password must be at least 6 characters")
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage("Passwords do not match")
-      return
-    }
-
-    setPasswordSaving(true)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    setPasswordSaving(false)
-
-    if (error) {
-      setPasswordMessage(error.message)
-      return
-    }
-
-    setPasswordMessage("Password updated successfully")
-    setNewPassword("")
-    setConfirmPassword("")
-  }
-
   async function deleteMyAccount() {
     setDeleteError("")
     setIsDeletingAccount(true)
@@ -145,16 +113,31 @@ export default function AdminDetailsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-4xl font-semibold uppercase italic tracking-tight text-white">Admin Details</h1>
-        <p className="mt-1 text-sm text-slate-400">View account details and manage your admin account.</p>
+        <h1 className="text-4xl font-semibold uppercase italic tracking-tight text-white">Settings</h1>
+        <p className="mt-1 text-sm text-slate-400">Manage your profile details and admin account settings.</p>
       </header>
 
       <section className="rounded-2xl border border-white/10 bg-[#0c1016] p-5">
-        <h2 className="text-lg font-semibold text-slate-100">Account Details</h2>
+        <h2 className="text-lg font-semibold text-slate-100">Profile Details</h2>
         {isLoading ? (
           <p className="mt-4 text-sm text-slate-400">Loading details...</p>
         ) : profile ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-4 sm:grid-cols-[auto_1fr]">
+            <div>
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Admin avatar"
+                  className="h-20 w-20 rounded-full border border-white/15 object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/15 bg-[#1a1e26] text-xl font-semibold text-slate-200">
+                  {((profile.email || "A").trim()[0] || "A").toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Email</p>
               <p className="text-sm text-slate-200">{profile.email || "Not set"}</p>
@@ -174,6 +157,7 @@ export default function AdminDetailsPage() {
             <div>
               <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Joined</p>
               <p className="text-sm text-slate-200">{new Date(profile.created_at).toLocaleDateString()}</p>
+            </div>
             </div>
           </div>
         ) : (
@@ -211,39 +195,6 @@ export default function AdminDetailsPage() {
 
         {statusMessage ? <p className="mt-3 text-sm text-slate-300">{statusMessage}</p> : null}
       </section>
-
-      <section className="rounded-2xl border border-white/10 bg-[#0c1016] p-5">
-        <h2 className="text-lg font-semibold text-slate-100">Change Password</h2>
-
-        <form onSubmit={handlePasswordChange} className="mt-4 grid gap-3 md:grid-cols-2">
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-            placeholder="New password"
-            className="rounded-lg border border-white/10 bg-[#131821] px-3 py-2 text-slate-100 outline-none"
-          />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Confirm password"
-            className="rounded-lg border border-white/10 bg-[#131821] px-3 py-2 text-slate-100 outline-none"
-          />
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              disabled={passwordSaving}
-              className="rounded-md border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {passwordSaving ? "Updating..." : "Update Password"}
-            </button>
-          </div>
-        </form>
-
-        {passwordMessage ? <p className="mt-3 text-sm text-slate-300">{passwordMessage}</p> : null}
-      </section>
-
       <section className="rounded-2xl border border-rose-500/20 bg-rose-950/10 p-5">
         <h2 className="text-lg font-semibold text-rose-300">Delete My Account</h2>
         <p className="mt-1 text-sm text-slate-300">This permanently removes your account and cannot be undone.</p>

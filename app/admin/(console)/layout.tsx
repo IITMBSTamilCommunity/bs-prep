@@ -51,7 +51,7 @@ export default async function AdminConsoleLayout({ children }: AdminLayoutProps)
       active: true,
     },
     {
-      label: "Admin Details",
+      label: "Settings",
       href: "/admin/details",
       icon: BadgeCheck,
       active: true,

@@ -30,12 +30,9 @@ export default function AdminUsersDirectoryPage() {
   const [isEditProcessing, setIsEditProcessing] = useState(false)
 
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
-  const [otpSent, setOtpSent] = useState(false)
-  const [otpVerificationCode, setOtpVerificationCode] = useState("")
   const [deletionStatus, setDeletionStatus] = useState("")
   const [isDeleteProcessing, setIsDeleteProcessing] = useState(false)
   const [deletingUserEmail, setDeletingUserEmail] = useState("")
-  const [testingOTP, setTestingOTP] = useState("")
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -143,63 +140,26 @@ export default function AdminUsersDirectoryPage() {
     setDeletingUserId(user.id)
     setDeletingUserEmail(user.email)
     setDeletionStatus("")
-    setOtpVerificationCode("")
-    setIsDeleteProcessing(true)
-
-    try {
-      const res = await fetch(`/api/admin/users/${user.id}/initiate-deletion`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setDeletionStatus(data.error || "Failed to initiate deletion")
-        setDeletingUserId(null)
-        setIsDeleteProcessing(false)
-        return
-      }
-
-      setOtpSent(true)
-      if (data.otp_for_testing) {
-        setTestingOTP(data.otp_for_testing)
-        setDeletionStatus(`DEV MODE OTP: ${data.otp_for_testing}\n\nOTP sent to ${data.masked_email}`)
-      } else {
-        setDeletionStatus(`OTP sent to ${data.masked_email}. Enter OTP to confirm deletion.`)
-      }
-    } catch {
-      setDeletionStatus("Failed to initiate deletion")
-      setDeletingUserId(null)
-    } finally {
-      setIsDeleteProcessing(false)
-    }
   }
 
-  async function confirmUserDeletion() {
-    if (!deletingUserId || otpVerificationCode.length !== 6) {
-      setDeletionStatus("Enter a valid 6-digit OTP")
+  async function deleteUserNow() {
+    if (!deletingUserId) {
+      setDeletionStatus("No user selected")
       return
     }
 
     setIsDeleteProcessing(true)
 
     try {
-      const res = await fetch(`/api/admin/users/${deletingUserId}/confirm-deletion`, {
+      const res = await fetch(`/api/admin/users/${deletingUserId}/initiate-deletion`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp: otpVerificationCode }),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        const attemptsRemaining = data.attempts_remaining || 0
-        setDeletionStatus(
-          attemptsRemaining > 0
-            ? `${data.error || data.message || "Verification failed"}\nAttempts remaining: ${attemptsRemaining}`
-            : data.error || data.message || "Verification failed",
-        )
+        setDeletionStatus(data.error || data.message || "Failed to delete user")
         return
       }
 
@@ -215,11 +175,8 @@ export default function AdminUsersDirectoryPage() {
 
   function closeDeleteModal() {
     setDeletingUserId(null)
-    setOtpSent(false)
-    setOtpVerificationCode("")
     setDeletionStatus("")
     setDeletingUserEmail("")
-    setTestingOTP("")
   }
 
   function renderRows(sectionUsers: DirectoryUser[]) {
@@ -426,6 +383,7 @@ export default function AdminUsersDirectoryPage() {
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0c1016] p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-slate-100">Delete User</h2>
             <p className="mt-1 text-sm text-slate-400">Target: {deletingUserEmail}</p>
+            <p className="mt-2 text-xs text-rose-300">This action permanently deletes the user account and related data.</p>
 
             {deletionStatus ? (
               <p className="mt-3 whitespace-pre-wrap rounded-lg border border-white/10 bg-[#131821] px-3 py-2 text-xs text-slate-300">
@@ -433,52 +391,14 @@ export default function AdminUsersDirectoryPage() {
               </p>
             ) : null}
 
-            {otpSent ? (
-              <div className="mt-4 space-y-2">
-                <input
-                  type="text"
-                  value={otpVerificationCode}
-                  onChange={(e) => setOtpVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="Enter 6-digit OTP"
-                  maxLength={6}
-                  className="w-full rounded-lg border border-white/10 bg-[#131821] px-3 py-2 text-center font-mono text-slate-100 outline-none"
-                />
-
-                {testingOTP ? (
-                  <button
-                    type="button"
-                    onClick={() => setOtpVerificationCode(testingOTP)}
-                    className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10"
-                  >
-                    Auto-fill testing OTP ({testingOTP})
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
-
             <div className="mt-6 flex gap-2">
-              {otpSent ? (
-                <button
-                  onClick={confirmUserDeletion}
-                  disabled={isDeleteProcessing || otpVerificationCode.length !== 6}
-                  className="flex-1 rounded-lg border border-rose-500/50 bg-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isDeleteProcessing ? "Deleting..." : "Confirm Delete"}
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    const target = users.find((u) => u.id === deletingUserId)
-                    if (target) {
-                      void initiateUserDeletion(target)
-                    }
-                  }}
-                  disabled={isDeleteProcessing}
-                  className="flex-1 rounded-lg border border-rose-500/50 bg-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isDeleteProcessing ? "Sending OTP..." : "Send OTP"}
-                </button>
-              )}
+              <button
+                onClick={deleteUserNow}
+                disabled={isDeleteProcessing}
+                className="flex-1 rounded-lg border border-rose-500/50 bg-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeleteProcessing ? "Deleting..." : "Delete Permanently"}
+              </button>
 
               <button
                 onClick={closeDeleteModal}

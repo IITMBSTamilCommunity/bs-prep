@@ -34,8 +34,8 @@ export default async function AdminPage() {
       value: stats.announcements,
     },
     {
-      title: "Admin Details",
-      description: "View admin profiles and active admins list.",
+      title: "Settings",
+      description: "Manage your admin profile and account settings.",
       href: "/admin/details",
       value: stats.admins,
     },

@@ -3,40 +3,11 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { hasAdminRole } from '@/lib/security/admin-role'
 import { writeRateLimiter } from '@/lib/rate-limit'
-import crypto from 'crypto'
 
 type Params = {
   params: Promise<{ id: string }>
 }
-
-// Helper to generate 6-digit OTP
-function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
-}
-
-// Helper to send OTP email (placeholder - implement with your email service)
-async function sendOTPEmail(email: string, otp: string, userName: string): Promise<{ success: boolean; message?: string }> {
-  try {
-    // TODO: Integrate with email service (SendGrid, Resend, AWS SES, etc.)
-    // For development, log to console. In production, implement actual email sending.
-    console.log(`\n========================================`)
-    console.log(`OTP DELETION REQUEST for ${userName} (${email})`)
-    console.log(`OTP Code: ${otp}`)
-    console.log(`Valid for 15 minutes`)
-    console.log(`========================================\n`)
-    
-    // In production, uncomment and use your email service:
-    // const response = await fetch('https://api.sendgrid.com/v3/mail/send', { ... })
-    
-    // For now, return success (OTP visible in server logs)
-    return { success: true, message: 'OTP generated (check server logs for OTP code)' }
-  } catch (error) {
-    console.error('Failed to send OTP email:', error)
-    return { success: false, message: 'Failed to generate OTP' }
-  }
-}
-
-// POST: Initiate user deletion by generating and sending OTP
+// POST: Delete user directly (admin only)
 export async function POST(req: NextRequest, { params }: Params) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const rl = await writeRateLimiter.check(ip)
@@ -76,7 +47,13 @@ export async function POST(req: NextRequest, { params }: Params) {
       )
     }
 
-    // Get the user to be deleted
+    if (adminUser.id === userId) {
+      return NextResponse.json(
+        { error: 'You cannot delete your own account from this screen' },
+        { status: 400 }
+      )
+    }
+
     const service = createServiceRoleClient()
     const { data: targetUserData, error: userError } = await service.auth.admin.getUserById(userId)
     const targetUser = targetUserData?.user
@@ -88,50 +65,57 @@ export async function POST(req: NextRequest, { params }: Params) {
       )
     }
 
-    // Load profile for display name in OTP messaging
     const { data: targetProfile } = await service
       .from('profiles')
       .select('role, first_name, last_name')
       .eq('id', userId)
       .maybeSingle()
 
-    // Generate OTP
-    const otp = generateOTP()
+    if ((targetProfile?.role || '').toLowerCase() === 'admin') {
+      const { count: adminCount, error: adminCountError } = await service
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'admin')
 
-    // Store OTP in database with 15-minute expiration
-    const { error: otpError } = await service
-      .from('deletion_otp_codes')
-      .upsert(
-        {
-          user_id: userId,
-          email: targetUser.email || '',
-          otp_code: otp,
-          is_verified: false,
-          attempts: 0,
-          created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-          deleted_by_admin_id: adminUser.id,
-        },
-        {
-          onConflict: 'user_id,email',
-        }
-      )
+      if (adminCountError) {
+        console.error('Failed to count admins:', adminCountError)
+        return NextResponse.json(
+          { error: 'Failed to validate admin deletion' },
+          { status: 500 }
+        )
+      }
 
-    if (otpError) {
-      console.error('Failed to store OTP:', otpError)
+      if ((adminCount ?? 0) <= 1) {
+        return NextResponse.json(
+          { error: 'Cannot delete the last admin account' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Delete user data in a safe order to avoid FK violations.
+    await service.from('enrollments').delete().eq('user_id', userId)
+    await service.from('quiz_attempts').delete().eq('student_id', userId)
+    await service.from('mentor_requests').delete().or(`student_id.eq.${userId},mentor_id.eq.${userId}`)
+    await service.from('leaderboard').delete().eq('student_id', userId)
+    await service.from('login_attempts').delete().eq('user_id', userId)
+    await service.from('announcements').delete().eq('created_by', userId)
+    await service.from('user_announcements').delete().eq('user_id', userId)
+
+    const { error: profileError } = await service.from('profiles').delete().eq('id', userId)
+    if (profileError) {
+      console.error('Failed to delete profile:', profileError)
       return NextResponse.json(
-        { error: 'Failed to generate OTP' },
+        { error: 'Failed to delete user profile' },
         { status: 500 }
       )
     }
 
-    // Send OTP via email (or log in development)
-    const userName = targetProfile?.first_name || targetUser.email?.split('@')[0] || 'User'
-    const emailResult = await sendOTPEmail(targetUser.email || '', otp, userName)
-
-    if (!emailResult.success) {
+    const { error: deleteError } = await service.auth.admin.deleteUser(userId)
+    if (deleteError) {
+      console.error('Failed to delete auth user:', deleteError)
       return NextResponse.json(
-        { error: emailResult.message || 'Failed to generate OTP' },
+        { error: 'Failed to delete user account' },
         { status: 500 }
       )
     }
@@ -139,12 +123,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json(
       {
         success: true,
-        message: 'OTP generated and ready for verification',
-        email: targetUser.email,
-        masked_email: targetUser.email ? `${targetUser.email.substring(0, 2)}***@${targetUser.email.split('@')[1]}` : 'user email',
-        // For development/testing only - remove in production once email service is integrated
-        otp_for_testing: process.env.NODE_ENV === 'development' ? otp : undefined,
-        otp_message: emailResult.message,
+        message: 'User account has been successfully deleted',
+        deleted_user_email: targetUser.email,
       },
       { status: 200 }
     )

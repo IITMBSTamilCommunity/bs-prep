@@ -1,6 +1,7 @@
 -- Seed or promote admin profiles from an explicit email allowlist.
 -- Replace the sample emails below before running.
 
+
 with admin_emails as (
   select lower(trim(email)) as email
   from unnest(array[

@@ -13,3 +13,4 @@ SET created_by_email = p.email
 FROM public.profiles AS p
 WHERE a.created_by = p.id
   AND a.created_by_email IS NULL;
+

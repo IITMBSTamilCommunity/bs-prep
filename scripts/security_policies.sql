@@ -17,6 +17,7 @@ ALTER TABLE IF EXISTS courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS course_weeks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS week_videos ENABLE ROW LEVEL SECURITY;
 
+
 -- =====================================================
 -- USER PROFILES POLICIES
 -- =====================================================

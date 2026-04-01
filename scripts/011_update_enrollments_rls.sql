@@ -9,6 +9,7 @@ CREATE POLICY "Users can view own enrollments"
   ON enrollments FOR SELECT
   USING (auth.uid() = user_id);
 
+
 -- Users can insert their own enrollments (via verified backend API only)
 DROP POLICY IF EXISTS "Users can insert own enrollments" ON enrollments;
 CREATE POLICY "Users can insert own enrollments"

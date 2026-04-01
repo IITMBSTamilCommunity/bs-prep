@@ -166,3 +166,4 @@ CREATE POLICY "Students can create mentor requests" ON public.mentor_requests FO
 CREATE POLICY "Mentors can update mentor requests" ON public.mentor_requests FOR UPDATE USING (
   mentor_id = auth.uid() OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
 );
+

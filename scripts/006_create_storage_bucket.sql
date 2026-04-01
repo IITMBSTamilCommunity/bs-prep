@@ -14,6 +14,7 @@ CREATE POLICY "Anyone can view profile images"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'profiles');
 
+
 CREATE POLICY "Users can upload their own profile images"
 ON storage.objects FOR INSERT
 WITH CHECK (

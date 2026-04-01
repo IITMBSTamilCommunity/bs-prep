@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+
 -- Indexes for fast lookups in rate limiting
 CREATE INDEX IF NOT EXISTS idx_login_attempts_email_created ON login_attempts(email, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_login_attempts_ip_created ON login_attempts(ip_address, created_at DESC);

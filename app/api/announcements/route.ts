@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { randomUUID } from "crypto"
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server"
-import { validateAndSanitizeInput, validateRequiredFields } from "@/lib/security/validation"
+import { sanitizeString, validateRequiredFields } from "@/lib/security/validation"
 import { apiRateLimiter, writeRateLimiter } from "@/lib/rate-limit"
 import { hasAdminRole } from "@/lib/security/admin-role"
 import { sendAnnouncementCreatedEmail } from "@/lib/notifications/announcement-email"
@@ -49,19 +50,23 @@ function isMissingColumnError(error: unknown, columnName: string): boolean {
   return e.code === "PGRST204" && (e.message || "").includes(`'${columnName}'`)
 }
 
-// Valid announcement types
-const VALID_ANNOUNCEMENT_TYPES = ['Live Classes', 'YouTube Videos', 'Announcements', 'General']
-
-function validateAnnouncementType(type: unknown): { valid: boolean; type: string } {
-  if (!type || typeof type !== 'string') {
-    return { valid: true, type: 'General' } // Default to General
+function isNotNullIdError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false
   }
 
-  if (VALID_ANNOUNCEMENT_TYPES.includes(type)) {
-    return { valid: true, type }
+  const e = error as { code?: string; message?: string }
+  return e.code === "23502" && (e.message || "").toLowerCase().includes("id")
+}
+
+function isInvalidIdTypeError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false
   }
 
-  return { valid: false, type: 'General' }
+  const e = error as { code?: string; message?: string }
+  const message = (e.message || "").toLowerCase()
+  return e.code === "22P02" && message.includes("id")
 }
 
 // GET: fetch announcements - public endpoint
@@ -75,11 +80,20 @@ export async function GET(request: NextRequest) {
     const includeExpired = request.nextUrl.searchParams.get("includeExpired") === "1"
     const supabase = await createClient()
     
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("announcements")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100) // Limit results to prevent excessive data transfer
+      .limit(100)
+
+    if (error && isMissingColumnError(error, "created_at")) {
+      const fallback = await supabase
+        .from("announcements")
+        .select("*")
+        .limit(100)
+      data = fallback.data
+      error = fallback.error
+    }
 
     if (error) {
       console.error('Announcements fetch error:', error)
@@ -89,36 +103,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const creatorIds = Array.from(
-      new Set(
-        (data ?? [])
-          .map((item: Record<string, unknown>) => item.created_by)
-          .filter((value): value is string => typeof value === "string")
-      )
-    )
-
-    const profileEmailById = new Map<string, string>()
-    if (creatorIds.length > 0) {
-      const service = createServiceRoleClient()
-      const { data: creatorProfiles } = await service
-        .from("profiles")
-        .select("id, email")
-        .in("id", creatorIds)
-
-      for (const profile of creatorProfiles ?? []) {
-        if (profile.id && profile.email) {
-          profileEmailById.set(profile.id, profile.email)
-        }
-      }
-    }
-
     const normalized = (data ?? []).map((item: Record<string, unknown>) => ({
       ...item,
-      message: (item.message as string | undefined) ?? (item.content as string | undefined) ?? "",
-      created_by_email:
-        (item.created_by_email as string | undefined) ??
-        (typeof item.created_by === "string" ? profileEmailById.get(item.created_by) : undefined) ??
-        null,
+      message: (item.message as string | undefined) ?? "",
     }))
 
     const filtered = includeExpired ? normalized : normalized.filter((item) => isAnnouncementActive(item))
@@ -184,22 +171,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Validate and sanitize inputs
-    const titleValidation = validateAndSanitizeInput(body.title, 200)
-    const messageValidation = validateAndSanitizeInput(message, 5000)
+    // Announcements are plain text; apply normalization and length limits only.
+    const sanitizedTitle = sanitizeString(body.title, 200)
+    const sanitizedMessage = sanitizeString(message, 5000)
 
-    if (!titleValidation.valid) {
-      return NextResponse.json(
-        { error: `Invalid title: ${titleValidation.errors.join(', ')}` },
-        { status: 400 }
-      )
+    if (!sanitizedTitle) {
+      return NextResponse.json({ error: "Invalid title" }, { status: 400 })
     }
 
-    if (!messageValidation.valid) {
-      return NextResponse.json(
-        { error: `Invalid message: ${messageValidation.errors.join(', ')}` },
-        { status: 400 }
-      )
+    if (!sanitizedMessage) {
+      return NextResponse.json({ error: "Invalid message" }, { status: 400 })
     }
 
     const parsedDisplayHours = parseDisplayHours(body.display_hours)
@@ -210,40 +191,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Validate announcement type
-    const typeValidation = validateAnnouncementType(body.announcement_type)
-    if (!typeValidation.valid) {
-      return NextResponse.json(
-        { error: `Invalid announcement type. Valid types are: ${VALID_ANNOUNCEMENT_TYPES.join(', ')}` },
-        { status: 400 }
-      )
-    }
-
     const adminClient = createServiceRoleClient()
 
     // Build payload with creator info
     const payloadWithCreator: Record<string, unknown> = {
-      title: titleValidation.sanitized,
-      message: messageValidation.sanitized,
+      id: randomUUID(),
+      title: sanitizedTitle,
+      message: sanitizedMessage,
       created_by: user.id,
-      created_by_email: user.email ?? null,
       display_hours: parsedDisplayHours,
-    }
-
-    // Include announcement_type if it's valid (handle DB schema differences)
-    if (typeValidation.type) {
-      payloadWithCreator.announcement_type = typeValidation.type
-    }
-
-    const payloadWithoutCreator: Record<string, unknown> = {
-      title: titleValidation.sanitized,
-      message: messageValidation.sanitized,
-      display_hours: parsedDisplayHours,
-    }
-
-    // Include announcement_type in payload without creator too
-    if (typeValidation.type) {
-      payloadWithoutCreator.announcement_type = typeValidation.type
     }
 
     let { data, error } = await adminClient
@@ -251,27 +207,55 @@ export async function POST(req: NextRequest) {
       .insert([payloadWithCreator])
       .select()
 
+    // Legacy schema fallback: some DBs use integer identities for `id`.
+    if (error && isInvalidIdTypeError(error)) {
+      const withoutIdPayload: Record<string, unknown> = {
+        title: sanitizedTitle,
+        message: sanitizedMessage,
+        created_by: user.id,
+        display_hours: parsedDisplayHours,
+      }
+      const retry = await adminClient.from("announcements").insert([withoutIdPayload]).select()
+
+      data = retry.data
+      error = retry.error
+    }
+
     // If column doesn't exist in DB yet, retry without it
     if (
       error &&
-      (isMissingColumnError(error, "created_by_email") ||
-        isMissingColumnError(error, "created_by") ||
-        isMissingColumnError(error, "announcement_type") ||
+      (isMissingColumnError(error, "created_by") ||
         isMissingColumnError(error, "display_hours"))
     ) {
       const fallbackPayload = {
-        title: titleValidation.sanitized,
-        message: messageValidation.sanitized,
+        id: randomUUID(),
+        title: sanitizedTitle,
+        message: sanitizedMessage,
       }
       const retry = await adminClient.from("announcements").insert([fallbackPayload]).select()
       data = retry.data
       error = retry.error
     }
 
+    if (error && isNotNullIdError(error)) {
+      const retryWithId = await adminClient
+        .from("announcements")
+        .insert([
+          {
+            id: randomUUID(),
+            title: sanitizedTitle,
+            message: sanitizedMessage,
+          },
+        ])
+        .select()
+      data = retryWithId.data
+      error = retryWithId.error
+    }
+
     if (error) {
       console.error('Announcement creation error:', error)
       return NextResponse.json(
-        { error: "Failed to create announcement" },
+        { error: "Failed to create announcement", details: (error as { message?: string }).message ?? null },
         { status: 500 }
       )
     }
@@ -280,8 +264,8 @@ export async function POST(req: NextRequest) {
 
     try {
       await sendAnnouncementCreatedEmail({
-        title: titleValidation.sanitized,
-        message: messageValidation.sanitized,
+        title: sanitizedTitle,
+        message: sanitizedMessage,
         createdByEmail: user.email ?? null,
       })
     } catch (mailError) {
@@ -292,8 +276,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         ...announcement,
-        message: announcement?.message ?? announcement?.content ?? "",
-        created_by_email: announcement?.created_by_email ?? user.email ?? null,
+        message: announcement?.message ?? "",
       },
       { status: 201 }
     )

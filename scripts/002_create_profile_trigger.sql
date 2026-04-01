@@ -13,7 +13,7 @@ BEGIN
     last_name,
     role
   )
-  VALUES (
+  VALUES ( 
     new.id,
     new.email,
     COALESCE(new.raw_user_meta_data ->> 'first_name', ''),

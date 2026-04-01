@@ -11,3 +11,4 @@ ADD COLUMN IF NOT EXISTS educations TEXT;
 
 -- Create unique index on username (if username is provided)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_profiles_extended_username ON user_profiles_extended(username) WHERE username IS NOT NULL;
+

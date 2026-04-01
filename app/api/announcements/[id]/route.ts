@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server"
-import { validateAndSanitizeInput, validateRequiredFields } from "@/lib/security/validation"
+import { sanitizeString, validateRequiredFields } from "@/lib/security/validation"
 import { writeRateLimiter } from "@/lib/rate-limit"
 import { hasAdminRole } from "@/lib/security/admin-role"
 
@@ -29,28 +29,14 @@ function parseDisplayHours(value: unknown): number | null {
   return Math.floor(parsed)
 }
 
-function isMissingColumnError(error: unknown, columnName: string): boolean {
+function isInvalidIdTypeError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false
   }
 
   const e = error as { code?: string; message?: string }
-  return e.code === "PGRST204" && (e.message || "").includes(`'${columnName}'`)
-}
-
-// Valid announcement types
-const VALID_ANNOUNCEMENT_TYPES = ['Live Classes', 'YouTube Videos', 'Announcements', 'General']
-
-function validateAnnouncementType(type: unknown): { valid: boolean; type: string } {
-  if (!type || typeof type !== 'string') {
-    return { valid: true, type: 'General' } // Default to General
-  }
-
-  if (VALID_ANNOUNCEMENT_TYPES.includes(type)) {
-    return { valid: true, type }
-  }
-
-  return { valid: false, type: 'General' }
+  const message = (e.message || "").toLowerCase()
+  return e.code === "22P02" && message.includes("id")
 }
 
 async function assertAdmin() {
@@ -108,21 +94,15 @@ export async function PUT(req: NextRequest, { params }: Params) {
       )
     }
 
-    const titleValidation = validateAndSanitizeInput(body.title, 200)
-    const messageValidation = validateAndSanitizeInput(message, 5000)
+    const sanitizedTitle = sanitizeString(body.title, 200)
+    const sanitizedMessage = sanitizeString(message, 5000)
 
-    if (!titleValidation.valid) {
-      return NextResponse.json(
-        { error: `Invalid title: ${titleValidation.errors.join(", ")}` },
-        { status: 400 }
-      )
+    if (!sanitizedTitle) {
+      return NextResponse.json({ error: "Invalid title" }, { status: 400 })
     }
 
-    if (!messageValidation.valid) {
-      return NextResponse.json(
-        { error: `Invalid message: ${messageValidation.errors.join(", ")}` },
-        { status: 400 }
-      )
+    if (!sanitizedMessage) {
+      return NextResponse.json({ error: "Invalid message" }, { status: 400 })
     }
 
     const parsedDisplayHours = parseDisplayHours(body.display_hours)
@@ -130,19 +110,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Invalid display hours. Enter a value between 1 and 720." }, { status: 400 })
     }
 
-    // Validate announcement type
-    const typeValidation = validateAnnouncementType(body.announcement_type)
-    if (!typeValidation.valid) {
-      return NextResponse.json(
-        { error: `Invalid announcement type. Valid types are: ${VALID_ANNOUNCEMENT_TYPES.join(', ')}` },
-        { status: 400 }
-      )
-    }
-
     const updatePayload: Record<string, string | number> = {
-      title: titleValidation.sanitized,
-      message: messageValidation.sanitized,
-      announcement_type: typeValidation.type,
+      title: sanitizedTitle,
+      message: sanitizedMessage,
       display_hours: parsedDisplayHours,
     }
 
@@ -153,11 +123,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .select()
       .single()
 
-    if (error && isMissingColumnError(error, "display_hours")) {
+    if (error) {
       const fallbackPayload = {
-        title: titleValidation.sanitized,
-        message: messageValidation.sanitized,
-        announcement_type: typeValidation.type,
+        title: sanitizedTitle,
+        message: sanitizedMessage,
       }
 
       const retry = await supabase
@@ -169,6 +138,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
       data = retry.data
       error = retry.error
+    }
+
+    if (error && isInvalidIdTypeError(error)) {
+      return NextResponse.json({ error: "Invalid announcement ID format for this database." }, { status: 400 })
     }
 
     if (error) {

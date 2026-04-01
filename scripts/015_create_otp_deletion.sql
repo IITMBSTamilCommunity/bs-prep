@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.deletion_otp_codes (
 
 ALTER TABLE public.deletion_otp_codes ENABLE ROW LEVEL SECURITY;
 
+
 -- Only admins can see and manage OTP codes
 CREATE POLICY "Admins can view OTP codes" ON public.deletion_otp_codes
   FOR SELECT

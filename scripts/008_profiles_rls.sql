@@ -13,6 +13,7 @@ DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 DROP POLICY IF EXISTS "Admins can view all profiles" ON profiles;
 DROP POLICY IF EXISTS "Admins can update all profiles" ON profiles;
 
+
 -- Users can view their own profile record
 CREATE POLICY "Users can view own profile"
   ON profiles

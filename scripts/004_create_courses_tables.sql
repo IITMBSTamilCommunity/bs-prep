@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS courses (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+
 -- Create enrollments table
 CREATE TABLE IF NOT EXISTS enrollments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

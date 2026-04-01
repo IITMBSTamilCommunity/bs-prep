@@ -17,3 +17,4 @@ FROM public.courses
 WHERE title = 'Introduction to Web Development'
 LIMIT 1
 ON CONFLICT DO NOTHING;
+

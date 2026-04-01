@@ -5,3 +5,4 @@ ALTER TABLE IF EXISTS public.announcements
 CREATE INDEX IF NOT EXISTS idx_announcements_type ON public.announcements(announcement_type);
 
 -- This allows filtering announcements by type for better user experience
+

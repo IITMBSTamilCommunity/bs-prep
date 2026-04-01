@@ -6,26 +6,8 @@ type Announcement = {
   id: string | number
   title: string
   message: string
-  content?: string
-  announcement_type?: string
   display_hours?: number | null
-  created_by_email?: string | null
   created_at: string
-}
-
-const ANNOUNCEMENT_TYPES = ['Live Classes', 'YouTube Videos', 'Announcements', 'General']
-
-function getAnnouncementTypeColor(type?: string): string {
-  switch (type) {
-    case 'Live Classes':
-      return 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-    case 'YouTube Videos':
-      return 'border-red-500/40 bg-red-500/10 text-red-300'
-    case 'Announcements':
-      return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-    default:
-      return 'border-white/20 bg-white/5 text-slate-300'
-  }
 }
 
 export default function AdminAnnouncementsPage() {
@@ -34,14 +16,12 @@ export default function AdminAnnouncementsPage() {
 
   const [title, setTitle] = useState("")
   const [messageText, setMessageText] = useState("")
-  const [announcementType, setAnnouncementType] = useState<string>("General")
   const [displayHours, setDisplayHours] = useState("24")
   const [loadingCreate, setLoadingCreate] = useState(false)
 
   const [editingId, setEditingId] = useState<string | number | null>(null)
   const [editTitle, setEditTitle] = useState("")
   const [editMessage, setEditMessage] = useState("")
-  const [editAnnouncementType, setEditAnnouncementType] = useState<string>("General")
   const [editDisplayHours, setEditDisplayHours] = useState("24")
   const [loadingEdit, setLoadingEdit] = useState(false)
 
@@ -76,40 +56,42 @@ export default function AdminAnnouncementsPage() {
     setLoadingCreate(true)
     setStatusMessage("")
 
-    const res = await fetch("/api/announcements", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title,
-        message: messageText,
-        announcement_type: announcementType,
-        display_hours: Number(displayHours),
-      }),
-    })
+    try {
+      const res = await fetch("/api/announcements", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          message: messageText,
+          display_hours: Number(displayHours),
+        }),
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (!res.ok) {
-      setStatusMessage(data.error || "Something went wrong")
-    } else {
-      setStatusMessage("Announcement added successfully")
-      setTitle("")
-      setMessageText("")
-      setAnnouncementType("General")
-      setDisplayHours("24")
-      await loadAnnouncements()
+      if (!res.ok) {
+        const detail = typeof data.details === "string" && data.details ? ` (${data.details})` : ""
+        setStatusMessage((data.error || "Something went wrong") + detail)
+      } else {
+        setStatusMessage("Announcement added successfully")
+        setTitle("")
+        setMessageText("")
+        setDisplayHours("24")
+        await loadAnnouncements()
+      }
+    } catch {
+      setStatusMessage("Network error while posting announcement")
+    } finally {
+      setLoadingCreate(false)
     }
-
-    setLoadingCreate(false)
   }
 
   function startEdit(announcement: Announcement) {
     setEditingId(announcement.id)
     setEditTitle(announcement.title)
-    setEditMessage(announcement.message || announcement.content || "")
-    setEditAnnouncementType(announcement.announcement_type || "General")
+    setEditMessage(announcement.message || "")
     setEditDisplayHours(String(announcement.display_hours ?? 24))
     setStatusMessage("")
   }
@@ -118,7 +100,6 @@ export default function AdminAnnouncementsPage() {
     setEditingId(null)
     setEditTitle("")
     setEditMessage("")
-    setEditAnnouncementType("General")
     setEditDisplayHours("24")
   }
 
@@ -139,7 +120,6 @@ export default function AdminAnnouncementsPage() {
       body: JSON.stringify({
         title: editTitle,
         message: editMessage,
-        announcement_type: editAnnouncementType,
         display_hours: Number(editDisplayHours),
       }),
     })
@@ -189,6 +169,7 @@ export default function AdminAnnouncementsPage() {
 
       <section className="rounded-2xl border border-white/10 bg-[#070c15] p-5">
         <h2 className="text-lg font-semibold text-slate-100">Create Announcement</h2>
+        {statusMessage ? <p className="mt-2 text-sm text-slate-300">{statusMessage}</p> : null}
         <form onSubmit={handleCreate} className="mt-4 space-y-3">
           <input
             placeholder="Title"
@@ -196,19 +177,8 @@ export default function AdminAnnouncementsPage() {
             onChange={(e) => setTitle(e.target.value)}
             required
             className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none placeholder:text-slate-500"
+            suppressHydrationWarning
           />
-
-          <select
-            value={announcementType}
-            onChange={(e) => setAnnouncementType(e.target.value)}
-            className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none"
-          >
-            {ANNOUNCEMENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
 
           <textarea
             placeholder="Message"
@@ -217,6 +187,7 @@ export default function AdminAnnouncementsPage() {
             required
             rows={4}
             className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none placeholder:text-slate-500"
+            suppressHydrationWarning
           />
 
           <input
@@ -228,12 +199,14 @@ export default function AdminAnnouncementsPage() {
             required
             placeholder="Show in dashboard for hours (e.g. 24)"
             className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none placeholder:text-slate-500"
+            suppressHydrationWarning
           />
 
           <button
             type="submit"
             disabled={loadingCreate}
             className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+            suppressHydrationWarning
           >
             {loadingCreate ? "Posting..." : "Post Announcement"}
           </button>
@@ -248,21 +221,16 @@ export default function AdminAnnouncementsPage() {
         <div className="mt-4 space-y-3">
           {!loadingList && announcements.map((a) => (
             <article key={a.id} className="rounded-xl border border-white/10 bg-[#0a101c] p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-semibold text-slate-100">{a.title}</h3>
-                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getAnnouncementTypeColor(a.announcement_type)}`}>
-                  {a.announcement_type || 'General'}
-                </span>
-              </div>
-              <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap">{a.message || a.content || ""}</p>
+              <h3 className="font-semibold text-slate-100">{a.title}</h3>
+              <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap">{a.message || ""}</p>
               <p className="mt-2 text-xs text-slate-500">{new Date(a.created_at).toLocaleString()}</p>
               <p className="mt-1 text-xs text-slate-500">Visible for: {a.display_hours ?? 24} hour(s)</p>
-              <p className="mt-1 text-xs text-slate-500">Created by: {a.created_by_email || "Admin"}</p>
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
                   onClick={() => startEdit(a)}
                   className="rounded-md border border-white/20 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/5"
+                  suppressHydrationWarning
                 >
                   Edit
                 </button>
@@ -271,6 +239,7 @@ export default function AdminAnnouncementsPage() {
                   onClick={() => handleDelete(a.id)}
                   disabled={deletingId === a.id}
                   className="rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  suppressHydrationWarning
                 >
                   {deletingId === a.id ? "Deleting..." : "Delete"}
                 </button>
@@ -290,19 +259,8 @@ export default function AdminAnnouncementsPage() {
               onChange={(e) => setEditTitle(e.target.value)}
               required
               className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none placeholder:text-slate-500"
+              suppressHydrationWarning
             />
-
-            <select
-              value={editAnnouncementType}
-              onChange={(e) => setEditAnnouncementType(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none"
-            >
-              {ANNOUNCEMENT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
 
             <textarea
               placeholder="Message"
@@ -311,6 +269,7 @@ export default function AdminAnnouncementsPage() {
               required
               rows={4}
               className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none placeholder:text-slate-500"
+              suppressHydrationWarning
             />
 
             <input
@@ -322,6 +281,7 @@ export default function AdminAnnouncementsPage() {
               required
               placeholder="Show in dashboard for hours"
               className="w-full rounded-lg border border-white/10 bg-[#0b1220] px-3 py-2 text-slate-100 outline-none placeholder:text-slate-500"
+              suppressHydrationWarning
             />
 
             <div className="flex gap-2">
@@ -329,6 +289,7 @@ export default function AdminAnnouncementsPage() {
                 type="submit"
                 disabled={loadingEdit}
                 className="rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                suppressHydrationWarning
               >
                 {loadingEdit ? "Saving..." : "Save Changes"}
               </button>
@@ -336,6 +297,7 @@ export default function AdminAnnouncementsPage() {
                 type="button"
                 onClick={cancelEdit}
                 className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5"
+                suppressHydrationWarning
               >
                 Cancel
               </button>
@@ -344,7 +306,7 @@ export default function AdminAnnouncementsPage() {
         </section>
       )}
 
-      {statusMessage ? <p className="text-sm text-slate-300">{statusMessage}</p> : null}
+      {statusMessage ? <p className="hidden text-sm text-slate-300">{statusMessage}</p> : null}
     </div>
   )
 }

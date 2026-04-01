@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS payment_orders (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+
 -- Indexes for fast lookups
 CREATE INDEX IF NOT EXISTS idx_payment_orders_user_id ON payment_orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_payment_orders_created_at ON payment_orders(created_at);

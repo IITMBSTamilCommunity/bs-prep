@@ -72,6 +72,12 @@ export async function proxy(request: NextRequest) {
     if (pathname.includes('/auth/')) {
       maxRequests = 5
       windowMs = 15 * 60 * 1000 // 15 minutes for auth
+    } else if (pathname.startsWith('/api/payment/webhook')) {
+      maxRequests = 300
+      windowMs = 60 * 1000 // 1 minute for webhook callbacks
+    } else if (pathname.startsWith('/api/payment/')) {
+      maxRequests = 120
+      windowMs = 60 * 1000 // 1 minute for checkout/verify requests
     } else if (pathname.includes('/enroll')) {
       maxRequests = 3
       windowMs = 60 * 1000 // 1 minute for enrollment

@@ -26,6 +26,30 @@ function getRazorpayClient() {
   });
 }
 
+async function submitPaymentLeadToGoogleForm(name: string, email: string, phone: string) {
+  // Convert Google Form view URL to the POST endpoint.
+  const formResponseUrl =
+    "https://docs.google.com/forms/d/e/1FAIpQLSfwxUYJufgt94JoqCBU0Ob3C5Hj-uRHIydWk0OyiAafrfFgXg/formResponse";
+
+  const payload = new URLSearchParams({
+    "entry.1404716213": name,
+    "entry.1770411357": email,
+    "entry.388970807": phone,
+  });
+
+  const response = await fetch(formResponseUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: payload,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Google Form submit failed with status ${response.status}`);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting: 50 verification attempts per 15 minutes per user
@@ -109,6 +133,9 @@ export async function POST(request: NextRequest) {
 
     const expectedCourseId = typeof order.notes?.courseId === "string" ? order.notes.courseId : "";
     const expectedUserId = typeof order.notes?.userId === "string" ? order.notes.userId : "";
+    const payerName = typeof order.notes?.payerName === "string" ? order.notes.payerName : "";
+    const payerEmail = typeof order.notes?.payerEmail === "string" ? order.notes.payerEmail : "";
+    const payerPhone = typeof order.notes?.payerPhone === "string" ? order.notes.payerPhone : "";
 
     if (!expectedCourseId || !(expectedCourseId in coursePricing)) {
       return NextResponse.json({ error: "Invalid order metadata" }, { status: 400 });
@@ -195,6 +222,16 @@ export async function POST(request: NextRequest) {
         { error: "Failed to enroll in course" },
         { status: 500 }
       );
+    }
+
+    // Payment is verified and access is granted. Now send the captured checkout details to Google Form.
+    if (payerName && payerEmail && payerPhone) {
+      try {
+        await submitPaymentLeadToGoogleForm(payerName, payerEmail, payerPhone);
+      } catch (googleFormError) {
+        // Do not fail a valid payment if Google Form submission has a transient error.
+        console.error("Google Form submission failed:", googleFormError);
+      }
     }
 
     return NextResponse.json({

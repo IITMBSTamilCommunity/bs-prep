@@ -82,7 +82,10 @@ export default function PackageDealPage() {
   const [loading, setLoading] = useState(false)
   const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
   const [checkoutReady, setCheckoutReady] = useState(false)
+  const [popup, setPopup] = useState<{ title: string; message: string } | null>(null)
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" })
+
+  const showPopup = (title: string, message: string) => setPopup({ title, message })
 
   useEffect(() => {
     checkAuth()
@@ -111,19 +114,19 @@ export default function PackageDealPage() {
 
   const handlePayment = async () => {
     if (!formData.name || !formData.email || !formData.phone) {
-      alert("Please fill all fields")
+      showPopup("Missing Details", "Please fill all fields before continuing.")
       return
     }
 
     if (!razorpayKeyId) {
-      alert("Razorpay is not configured. Please set NEXT_PUBLIC_RAZORPAY_KEY_ID in .env.local and restart the app.")
+      showPopup("Configuration Required", "Payment is not configured. Please contact support.")
       return
     }
 
     setLoading(true)
     try {
       if (!checkoutReady) {
-        alert("Payment gateway is still loading. Please try again in a moment.")
+        showPopup("Gateway Loading", "Payment gateway is still loading. Please try again in a moment.")
         setLoading(false)
         return
       }
@@ -162,6 +165,7 @@ export default function PackageDealPage() {
         currency: "INR",
         name: "BSPrep",
         description: "Qualifier Bundle — All 3 Courses",
+        image: "/logo.jpeg",
         order_id: orderData.orderId,
         prefill: {
           name: formData.name,
@@ -190,11 +194,11 @@ export default function PackageDealPage() {
               throw new Error(verifyData?.error || "Payment verification failed")
             }
 
-            alert("Payment successful! Your enrollment is confirmed.")
+            showPopup("Payment Successful", "Your enrollment is confirmed.")
             router.push("/dashboard/courses")
           } catch (verifyError) {
             const message = verifyError instanceof Error ? verifyError.message : "Payment verification failed"
-            alert(message)
+            showPopup("Payment Verification Failed", message)
             setLoading(false)
           }
         },
@@ -215,7 +219,7 @@ export default function PackageDealPage() {
     } catch (error) {
       console.error("Payment error:", error)
       const message = error instanceof Error ? error.message : "Payment failed. Please try again."
-      alert(message)
+      showPopup("Payment Failed", message)
       setLoading(false)
     }
   }
@@ -430,6 +434,22 @@ export default function PackageDealPage() {
           </div>
         </div>
       </div>
+
+      {popup ? (
+        <section className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0c1016] p-5 shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-100">{popup.title}</h2>
+            <p className="mt-2 text-sm text-slate-300">{popup.message}</p>
+            <button
+              type="button"
+              onClick={() => setPopup(null)}
+              className="mt-5 w-full rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5"
+            >
+              OK
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       <Footer />
     </div>

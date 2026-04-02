@@ -126,6 +126,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (error instanceof Error && error.message.includes("Missing Razorpay server credentials")) {
+      return NextResponse.json(
+        { error: "Payment gateway configuration missing on server" },
+        { status: 500 }
+      );
+    }
+
+    const maybeRazorpayError = error as { statusCode?: number; error?: { description?: string } };
+    if (maybeRazorpayError?.statusCode === 401 || maybeRazorpayError?.statusCode === 403) {
+      return NextResponse.json(
+        { error: "Razorpay credentials invalid or mode mismatch" },
+        { status: 500 }
+      );
+    }
+
+    if (maybeRazorpayError?.error?.description) {
+      return NextResponse.json(
+        { error: `Razorpay error: ${maybeRazorpayError.error.description}` },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to create order" },
       { status: 500 }

@@ -9,8 +9,8 @@ const phoneSchema = z
   .regex(/^\+?[1-9]\d{1,14}$/)
   .max(20);
 
-// Name validation (alphanumeric + spaces, no special chars)
-const nameSchema = z.string().min(2).max(100).regex(/^[a-zA-Z\s'-]+$/);
+// Name validation (supports common real-world name formats, including numeric suffixes)
+const nameSchema = z.string().min(2).max(100).regex(/^[a-zA-Z0-9\s'.-]+$/);
 
 // Course ID validation (slug format)
 const courseIdSchema = z.string().regex(/^[a-z0-9-]+$/);
@@ -36,11 +36,14 @@ export function validatePaymentForm(data: unknown) {
   }
 
   const form = data as Record<string, unknown>;
+  const rawPhone = sanitizeString(form.phone);
+  // Accept common input formats like "+91 63825 12015" or "63825-12015".
+  const normalizedPhone = rawPhone.replace(/[\s()-]/g, "");
 
   return {
     name: nameSchema.parse(sanitizeString(form.name)),
     email: emailSchema.parse(sanitizeString(form.email)),
-    phone: phoneSchema.parse(sanitizeString(form.phone)),
+    phone: phoneSchema.parse(normalizedPhone),
   };
 }
 

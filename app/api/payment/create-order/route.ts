@@ -27,6 +27,13 @@ const coursePricing: Record<string, number> = {
 
 const BUNDLE_PRICE = 24900; // ₹249 in paise
 
+function buildReceipt(userId: string): string {
+  // Razorpay receipt max length is 40 chars.
+  const compactUser = userId.replace(/-/g, "").slice(0, 12);
+  const compactTime = Date.now().toString(36);
+  return `rcpt_${compactUser}_${compactTime}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting: 100 requests per 15 minutes per user
@@ -100,7 +107,7 @@ export async function POST(request: NextRequest) {
     const order = await razorpay.orders.create({
       amount,
       currency: "INR",
-      receipt: `receipt_${userId}_${Date.now()}`,
+      receipt: buildReceipt(userId),
       notes: {
         userId,
         courseId,

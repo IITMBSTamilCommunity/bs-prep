@@ -60,6 +60,12 @@ function checkRateLimit(key: string, maxRequests: number, windowMs: number): {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  let currentRateCheck: {
+    allowed: boolean
+    limit: number
+    remaining: number
+    reset: number
+  } | null = null
 
   // Apply rate limiting to API routes
   if (pathname.startsWith('/api/')) {
@@ -78,7 +84,7 @@ export async function proxy(request: NextRequest) {
     } else if (pathname.startsWith('/api/payment/')) {
       maxRequests = 120
       windowMs = 60 * 1000 // 1 minute for checkout/verify requests
-    } else if (pathname.includes('/enroll')) {
+    } else if (pathname.startsWith('/api/enroll')) {
       maxRequests = 3
       windowMs = 60 * 1000 // 1 minute for enrollment
     } else if (request.method === 'POST' || request.method === 'PUT' || request.method === 'DELETE') {
@@ -87,6 +93,7 @@ export async function proxy(request: NextRequest) {
     }
 
     const rateCheck = checkRateLimit(key, maxRequests, windowMs)
+    currentRateCheck = rateCheck
     
     if (!rateCheck.allowed) {
       const response = NextResponse.json(
@@ -140,16 +147,11 @@ export async function proxy(request: NextRequest) {
   const securedResponse = addSecurityHeaders(response)
   
   // Add rate limit headers for API routes
-  if (pathname.startsWith('/api/')) {
-    const key = getRateLimitKey(request)
-    const maxRequests = 60
-    const windowMs = 60 * 1000
-    const rateCheck = checkRateLimit(key, maxRequests, windowMs)
-    
+  if (pathname.startsWith('/api/') && currentRateCheck) {
     const headers = getRateLimitHeaders(
-      rateCheck.limit,
-      rateCheck.remaining,
-      rateCheck.reset
+      currentRateCheck.limit,
+      currentRateCheck.remaining,
+      currentRateCheck.reset
     )
     
     Object.entries(headers).forEach(([key, value]) => {

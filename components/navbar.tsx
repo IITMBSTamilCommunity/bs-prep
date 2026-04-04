@@ -33,8 +33,11 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
   const [notifOpen, setNotifOpen] = useState(false)
   const [upcomingClasses, setUpcomingClasses] = useState<any[]>([])
   const [announcements, setAnnouncements] = useState<any[]>([])
+  const [doubtNotifications, setDoubtNotifications] = useState<any[]>([])
   const [seenIds, setSeenIds] = useState<string[]>([])
   const [seenAnnouncementIds, setSeenAnnouncementIds] = useState<string[]>([])
+  const [seenDoubtIds, setSeenDoubtIds] = useState<string[]>([])
+  const [expandedNotificationIds, setExpandedNotificationIds] = useState<string[]>([])
   const router = useRouter()
   const supabase = createClient()
 
@@ -52,6 +55,37 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
   // Build a stable ID for a class notification
   const notifId = (cls: any) => `${cls.course}-${cls.date}-${cls.time}`
   const announcementNotifId = (a: any) => `announcement-${a.id}`
+  const doubtNotifId = (item: any) => `doubt-${item.doubt_id}`
+
+  const toggleNotificationExpand = (id: string) => {
+    setExpandedNotificationIds((current) => (
+      current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]
+    ))
+  }
+
+  const renderNotificationMessage = (id: string, message: string, clampClassName: string) => {
+    if (!message) {
+      return null
+    }
+
+    const isExpanded = expandedNotificationIds.includes(id)
+    const needsExpand = message.length > 130
+
+    return (
+      <>
+        <p className={`text-xs text-gray-600 mt-0.5 ${!isExpanded ? clampClassName : 'whitespace-pre-wrap'}`}>{message}</p>
+        {needsExpand ? (
+          <button
+            type="button"
+            onClick={() => toggleNotificationExpand(id)}
+            className="mt-1 text-[11px] font-semibold text-blue-700 hover:underline"
+          >
+            {isExpanded ? 'Show less' : 'Show more'}
+          </button>
+        ) : null}
+      </>
+    )
+  }
 
   // Load seen IDs from localStorage
   useEffect(() => {
@@ -60,6 +94,8 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
       if (stored) setSeenIds(JSON.parse(stored))
       const storedAnnouncements = localStorage.getItem('bsprep_seen_announcements')
       if (storedAnnouncements) setSeenAnnouncementIds(JSON.parse(storedAnnouncements))
+      const storedDoubts = localStorage.getItem('bsprep_seen_doubt_replies')
+      if (storedDoubts) setSeenDoubtIds(JSON.parse(storedDoubts))
     } catch {}
   }, [])
 
@@ -88,6 +124,23 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
     return () => clearInterval(interval)
   }, [isAuthenticated])
 
+  useEffect(() => {
+    if (!isAuthenticated || userRole === 'admin') return
+
+    const loadDoubtNotifications = async () => {
+      try {
+        const res = await fetch('/api/doubts/notifications')
+        if (!res.ok) return
+        const data = await res.json()
+        setDoubtNotifications(Array.isArray(data.notifications) ? data.notifications : [])
+      } catch {}
+    }
+
+    loadDoubtNotifications()
+    const interval = setInterval(loadDoubtNotifications, 60_000)
+    return () => clearInterval(interval)
+  }, [isAuthenticated, userRole])
+
   // Fetch announcements for notification dropdown
   useEffect(() => {
     if (!isAuthenticated) return
@@ -107,7 +160,8 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
 
   const unreadClassCount = upcomingClasses.filter(cls => !seenIds.includes(notifId(cls))).length
   const unreadAnnouncementCount = announcements.filter(a => !seenAnnouncementIds.includes(announcementNotifId(a))).length
-  const unreadCount = unreadClassCount + unreadAnnouncementCount
+  const unreadDoubtCount = doubtNotifications.filter((item) => !seenDoubtIds.includes(doubtNotifId(item))).length
+  const unreadCount = unreadClassCount + unreadAnnouncementCount + unreadDoubtCount
 
   const markAllSeen = () => {
     const classIds = upcomingClasses.map(notifId)
@@ -118,9 +172,14 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
     const mergedAnnouncementIds = Array.from(new Set([...seenAnnouncementIds, ...announcementIds]))
     setSeenAnnouncementIds(mergedAnnouncementIds)
 
+    const doubtIds = doubtNotifications.map(doubtNotifId)
+    const mergedDoubtIds = Array.from(new Set([...seenDoubtIds, ...doubtIds]))
+    setSeenDoubtIds(mergedDoubtIds)
+
     try {
       localStorage.setItem('bsprep_seen_notifs', JSON.stringify(mergedClassIds))
       localStorage.setItem('bsprep_seen_announcements', JSON.stringify(mergedAnnouncementIds))
+      localStorage.setItem('bsprep_seen_doubt_replies', JSON.stringify(mergedDoubtIds))
     } catch {}
   }
 
@@ -155,7 +214,7 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-3 flex-shrink-0 group">
+          <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-3 shrink-0 group">
             <img 
               src="/logo.jpeg" 
               alt="BSPrep Logo" 
@@ -192,7 +251,7 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                   <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${toolsOpen ? 'rotate-180' : ''}`} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
-                  className="bg-white border-gray-200 shadow-lg min-w-[240px] p-2 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
+                  className="bg-white border-gray-200 shadow-lg min-w-60 p-2 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
                   onMouseEnter={() => setToolsOpen(true)}
                   onMouseLeave={() => setToolsOpen(false)}
                 >
@@ -230,6 +289,9 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
               <Link href="/resources" className="text-base font-medium text-slate-700 hover:text-black transition-colors">
                 Resources
               </Link>
+              <Link href="/dashboard/doubts" className="text-base font-medium text-slate-700 hover:text-black transition-colors">
+                Doubts
+              </Link>
               <DropdownMenu open={toolsOpen} onOpenChange={setToolsOpen}>
                 <DropdownMenuTrigger 
                   className="text-base font-medium text-slate-700 hover:text-black transition-all duration-300 flex items-center gap-1"
@@ -241,7 +303,7 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                   <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${toolsOpen ? 'rotate-180' : ''}`} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
-                  className="bg-white border-gray-200 shadow-lg min-w-[240px] p-2 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
+                  className="bg-white border-gray-200 shadow-lg min-w-60 p-2 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-300"
                   onMouseEnter={() => setToolsOpen(true)}
                   onMouseLeave={() => setToolsOpen(false)}
                 >
@@ -277,27 +339,59 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                   <DropdownMenuContent align="end" className="w-80 bg-white border-gray-200 shadow-xl p-0 overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                       <span className="font-bold text-black text-sm">Notifications</span>
-                      {(upcomingClasses.length > 0 || announcements.length > 0) && (
-                        <span className="text-xs text-gray-500">{upcomingClasses.length + announcements.length} items</span>
+                      {(upcomingClasses.length > 0 || announcements.length > 0 || doubtNotifications.length > 0) && (
+                        <span className="text-xs text-gray-500">{upcomingClasses.length + announcements.length + doubtNotifications.length} items</span>
                       )}
                     </div>
-                    {upcomingClasses.length === 0 && announcements.length === 0 ? (
+                    {upcomingClasses.length === 0 && announcements.length === 0 && doubtNotifications.length === 0 ? (
                       <div className="px-4 py-8 text-center text-sm text-gray-400">
                         No notifications yet
                       </div>
                     ) : (
                       <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                        {doubtNotifications.slice(0, 4).map((item) => {
+                          const id = doubtNotifId(item)
+                          const isUnseen = !seenDoubtIds.includes(id)
+                          const createdAt = item.created_at ? new Date(item.created_at) : null
+                          return (
+                            <div key={id} className={`px-4 py-3 flex items-start gap-3 ${isUnseen ? 'bg-red-50' : 'bg-white'}`}>
+                              <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${isUnseen ? 'bg-red-500' : 'bg-gray-300'}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-0.5">Doubt Reply</p>
+                                <p className="text-sm font-semibold text-black leading-snug">{item.subject}</p>
+                                {renderNotificationMessage(id, item.message || '', 'line-clamp-2')}
+                                {createdAt ? (
+                                  <p className="text-xs text-gray-500 mt-1">{createdAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
+                                ) : null}
+                                <Link
+                                  href={`/dashboard/doubts?thread=${item.doubt_id}`}
+                                  className="mt-1 inline-block text-[11px] font-semibold text-blue-700 hover:underline"
+                                  onClick={() => setNotifOpen(false)}
+                                >
+                                  Open thread
+                                </Link>
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                        {doubtNotifications.length > 0 && (announcements.length > 0 || upcomingClasses.length > 0) && (
+                          <div className="px-4 py-1 bg-gray-50 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                            Announcements
+                          </div>
+                        )}
+
                         {announcements.slice(0, 3).map((announcement) => {
                           const id = announcementNotifId(announcement)
                           const isUnseen = !seenAnnouncementIds.includes(id)
                           const createdAt = announcement.created_at ? new Date(announcement.created_at) : null
                           return (
                             <div key={id} className={`px-4 py-3 flex items-start gap-3 ${isUnseen ? 'bg-red-50' : 'bg-white'}`}>
-                              <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${isUnseen ? 'bg-red-500' : 'bg-gray-300'}`} />
+                              <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${isUnseen ? 'bg-red-500' : 'bg-gray-300'}`} />
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-0.5">Announcement</p>
                                 <p className="text-sm font-semibold text-black leading-snug">{announcement.title}</p>
-                                <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{announcement.message || announcement.content || ''}</p>
+                                {renderNotificationMessage(id, announcement.message || announcement.content || '', 'line-clamp-2')}
                                 {createdAt ? (
                                   <p className="text-xs text-gray-500 mt-1">{createdAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</p>
                                 ) : null}
@@ -338,7 +432,7 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                           const courseName = courseNames[cls.course?.toLowerCase()] ?? cls.course
                           return (
                             <div key={i} className={`px-4 py-3 flex items-start gap-3 ${isUnseen ? 'bg-red-50' : 'bg-white'}`}>
-                              <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${isUnseen ? 'bg-red-500' : 'bg-gray-300'}`} />
+                              <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${isUnseen ? 'bg-red-500' : 'bg-gray-300'}`} />
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-0.5">{courseName}</p>
                                 <p className="text-sm font-semibold text-black leading-snug">{cls.topic}</p>
@@ -482,6 +576,9 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                 </Link>
                 <Link href="/resources" className="block px-4 py-2 text-sm font-medium text-slate-700 hover:text-black hover:bg-slate-50 rounded-lg transition-all">
                   Resources
+                </Link>
+                <Link href="/dashboard/doubts" className="block px-4 py-2 text-sm font-medium text-slate-700 hover:text-black hover:bg-slate-50 rounded-lg transition-all">
+                  Doubts
                 </Link>
                 <div className="px-4 py-2 text-sm font-semibold text-slate-500">
                   Tools

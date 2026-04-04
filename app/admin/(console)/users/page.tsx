@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CalendarDays, Mail, Search, ShieldCheck, UserRound, Trash2, Edit3 } from "lucide-react"
+import { CalendarDays, Mail, Search, ShieldCheck, UserRound, Trash2, Edit3, BookOpen, X } from "lucide-react"
 
 type DirectoryUser = {
   id: string
@@ -13,6 +13,13 @@ type DirectoryUser = {
   role: string | null
   avatar_url: string | null
   created_at: string
+}
+
+type UserEnrollment = {
+  course_id: string
+  title: string
+  enrolled_at: string
+  payment_status: string | null
 }
 
 export default function AdminUsersDirectoryPage() {
@@ -33,6 +40,11 @@ export default function AdminUsersDirectoryPage() {
   const [deletionStatus, setDeletionStatus] = useState("")
   const [isDeleteProcessing, setIsDeleteProcessing] = useState(false)
   const [deletingUserEmail, setDeletingUserEmail] = useState("")
+
+  const [coursesUser, setCoursesUser] = useState<DirectoryUser | null>(null)
+  const [coursesLoading, setCoursesLoading] = useState(false)
+  const [coursesError, setCoursesError] = useState("")
+  const [userEnrollments, setUserEnrollments] = useState<UserEnrollment[]>([])
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -179,6 +191,36 @@ export default function AdminUsersDirectoryPage() {
     setDeletingUserEmail("")
   }
 
+  async function openCoursesModal(user: DirectoryUser) {
+    setCoursesUser(user)
+    setCoursesError("")
+    setCoursesLoading(true)
+    setUserEnrollments([])
+
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/enrollments`, { cache: "no-store" })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setCoursesError(data.error || "Failed to load enrollments")
+        return
+      }
+
+      setUserEnrollments(Array.isArray(data.enrollments) ? data.enrollments : [])
+    } catch {
+      setCoursesError("Failed to load enrollments")
+    } finally {
+      setCoursesLoading(false)
+    }
+  }
+
+  function closeCoursesModal() {
+    setCoursesUser(null)
+    setCoursesError("")
+    setCoursesLoading(false)
+    setUserEnrollments([])
+  }
+
   function renderRows(sectionUsers: DirectoryUser[]) {
     if (sectionUsers.length === 0) {
       return <div className="px-6 py-8 text-sm text-slate-400">No users found.</div>
@@ -244,6 +286,14 @@ export default function AdminUsersDirectoryPage() {
               </div>
 
               <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => openCoursesModal(user)}
+                  className="rounded-md border border-blue-500/40 bg-blue-500/10 px-2.5 py-1.5 text-xs font-semibold text-blue-300 hover:bg-blue-500/20"
+                  title="View enrolled courses"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                </button>
+
                 <button
                   onClick={() => startEditProfile(user)}
                   className="rounded-md border border-white/20 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/5"
@@ -406,6 +456,60 @@ export default function AdminUsersDirectoryPage() {
                 className="flex-1 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {coursesUser && (
+        <section className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0c1016] p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-100">Enrolled Courses</h2>
+                <p className="mt-1 text-sm text-slate-400">{coursesUser.full_name || coursesUser.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCoursesModal}
+                className="rounded-md border border-white/15 p-2 text-slate-300 hover:bg-white/5"
+                title="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 max-h-80 space-y-2 overflow-y-auto pr-1">
+              {coursesLoading ? (
+                <p className="text-sm text-slate-400">Loading enrolled courses...</p>
+              ) : coursesError ? (
+                <p className="text-sm text-rose-300">{coursesError}</p>
+              ) : userEnrollments.length === 0 ? (
+                <p className="text-sm text-slate-400">This user has not enrolled in any courses yet.</p>
+              ) : (
+                userEnrollments.map((item) => (
+                  <article key={`${coursesUser.id}-${item.course_id}-${item.enrolled_at}`} className="rounded-xl border border-white/10 bg-[#131821] px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-100">{item.title}</p>
+                    <p className="mt-1 text-xs text-slate-400">Course ID: {item.course_id}</p>
+                    <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                      <span>
+                        Enrolled: {item.enrolled_at && !Number.isNaN(new Date(item.enrolled_at).getTime()) ? new Date(item.enrolled_at).toLocaleDateString() : "-"}
+                      </span>
+                      <span className="uppercase tracking-wider">{item.payment_status || "completed"}</span>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={closeCoursesModal}
+                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5"
+              >
+                Close
               </button>
             </div>
           </div>

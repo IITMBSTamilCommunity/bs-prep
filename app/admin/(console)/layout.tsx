@@ -1,8 +1,9 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { BadgeCheck, LayoutDashboard, LogOut, Megaphone, Users } from "lucide-react"
+import { BadgeCheck, LayoutDashboard, LogOut, Megaphone, MessageSquare, Users } from "lucide-react"
 import { hasAdminRole } from "@/lib/security/admin-role"
+import { AdminRefreshButton } from "@/components/admin-refresh-button"
 
 type AdminLayoutProps = {
   children: React.ReactNode
@@ -48,6 +49,12 @@ export default async function AdminConsoleLayout({ children }: AdminLayoutProps)
       label: "Announcements",
       href: "/admin/announcements",
       icon: Megaphone,
+      active: true,
+    },
+    {
+      label: "Doubts",
+      href: "/admin/doubts",
+      icon: MessageSquare,
       active: true,
     },
     {
@@ -123,8 +130,8 @@ export default async function AdminConsoleLayout({ children }: AdminLayoutProps)
 
         <section className="flex h-screen min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 border-b border-white/5 bg-[#090b10]/80 px-4 py-4 backdrop-blur md:px-7">
-            <div className="rounded-xl border border-white/5 bg-[#11141a] px-4 py-3 text-sm text-slate-400">
-              Search management items...
+            <div className="flex items-center justify-end">
+              <AdminRefreshButton />
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-7">{children}</div>

@@ -3,6 +3,8 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server"
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit"
 import { hasAdminRole } from "@/lib/security/admin-role"
 
+const isDevelopment = process.env.NODE_ENV !== "production"
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -15,17 +17,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const rl = await checkRateLimit(user.id, {
-      maxRequests: 5000,
-      windowMs: 60 * 1000,
-      keyPrefix: "doubts:notifications",
-    })
+    if (!isDevelopment) {
+      const rl = await checkRateLimit(user.id, {
+        maxRequests: 5000,
+        windowMs: 60 * 1000,
+        keyPrefix: "doubts:notifications",
+      })
 
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { error: "Too many requests" },
-        { status: 429, headers: getRateLimitHeaders(rl, 5000) },
-      )
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: "Too many requests" },
+          { status: 429, headers: getRateLimitHeaders(rl, 5000) },
+        )
+      }
     }
 
     const isAdmin = await hasAdminRole(user.id, user.email)

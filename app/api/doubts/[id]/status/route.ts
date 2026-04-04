@@ -4,6 +4,7 @@ import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit"
 import { hasAdminRole } from "@/lib/security/admin-role"
 
 const ALLOWED_STATUSES = new Set(["open", "in_progress", "resolved"])
+const isDevelopment = process.env.NODE_ENV !== "production"
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -44,17 +45,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const isAdmin = await hasAdminRole(user.id, user.email)
     const isOwner = doubt.student_id === user.id
 
-    const rl = await checkRateLimit(user.id, {
-      maxRequests: isAdmin ? 400 : 1200,
-      windowMs: 60 * 1000,
-      keyPrefix: "doubts:status",
-    })
+    if (!isDevelopment) {
+      const rl = await checkRateLimit(user.id, {
+        maxRequests: isAdmin ? 400 : 1200,
+        windowMs: 60 * 1000,
+        keyPrefix: "doubts:status",
+      })
 
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { error: "Too many requests" },
-        { status: 429, headers: getRateLimitHeaders(rl, isAdmin ? 400 : 1200) },
-      )
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: "Too many requests" },
+          { status: 429, headers: getRateLimitHeaders(rl, isAdmin ? 400 : 1200) },
+        )
+      }
     }
 
     if (!isAdmin && !isOwner) {

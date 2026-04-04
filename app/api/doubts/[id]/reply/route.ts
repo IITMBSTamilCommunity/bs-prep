@@ -4,6 +4,8 @@ import { sanitizeString } from "@/lib/security/validation"
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit"
 import { hasAdminRole } from "@/lib/security/admin-role"
 
+const isDevelopment = process.env.NODE_ENV !== "production"
+
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
@@ -17,17 +19,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const rl = await checkRateLimit(user.id, {
-      maxRequests: 1500,
-      windowMs: 60 * 1000,
-      keyPrefix: "doubts:reply",
-    })
+    if (!isDevelopment) {
+      const rl = await checkRateLimit(user.id, {
+        maxRequests: 1500,
+        windowMs: 60 * 1000,
+        keyPrefix: "doubts:reply",
+      })
 
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { error: "Too many requests" },
-        { status: 429, headers: getRateLimitHeaders(rl, 1500) },
-      )
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: "Too many requests" },
+          { status: 429, headers: getRateLimitHeaders(rl, 1500) },
+        )
+      }
     }
 
     const text = await request.text()

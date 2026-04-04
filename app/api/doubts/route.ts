@@ -17,6 +17,8 @@ type DoubtRecord = {
   updated_at: string
 }
 
+const isDevelopment = process.env.NODE_ENV !== "production"
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -33,17 +35,19 @@ export async function GET(request: NextRequest) {
     const view = request.nextUrl.searchParams.get("view")
     const adminView = admin && view === "admin"
 
-    const rl = await checkRateLimit(user.id, {
-      maxRequests: adminView ? 2000 : 10000,
-      windowMs: 60 * 1000,
-      keyPrefix: "doubts:list",
-    })
+    if (!isDevelopment) {
+      const rl = await checkRateLimit(user.id, {
+        maxRequests: adminView ? 2000 : 10000,
+        windowMs: 60 * 1000,
+        keyPrefix: "doubts:list",
+      })
 
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { error: "Too many requests" },
-        { status: 429, headers: getRateLimitHeaders(rl, adminView ? 2000 : 10000) },
-      )
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: "Too many requests" },
+          { status: 429, headers: getRateLimitHeaders(rl, adminView ? 2000 : 10000) },
+        )
+      }
     }
 
     const service = createServiceRoleClient()
@@ -139,17 +143,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const rl = await checkRateLimit(user.id, {
-      maxRequests: 600,
-      windowMs: 60 * 1000,
-      keyPrefix: "doubts:create",
-    })
+    if (!isDevelopment) {
+      const rl = await checkRateLimit(user.id, {
+        maxRequests: 600,
+        windowMs: 60 * 1000,
+        keyPrefix: "doubts:create",
+      })
 
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { error: "Too many requests" },
-        { status: 429, headers: getRateLimitHeaders(rl, 600) },
-      )
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: "Too many requests" },
+          { status: 429, headers: getRateLimitHeaders(rl, 600) },
+        )
+      }
     }
 
     const text = await request.text()

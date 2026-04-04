@@ -5,6 +5,7 @@ import { sanitizeFilename } from "@/lib/security/validation"
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp"])
+const isDevelopment = process.env.NODE_ENV !== "production"
 
 function getExt(fileType: string): string {
   if (fileType === "image/png") return "png"
@@ -24,17 +25,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const rl = await checkRateLimit(user.id, {
-      maxRequests: 200,
-      windowMs: 5 * 60 * 1000,
-      keyPrefix: "doubts:upload",
-    })
+    if (!isDevelopment) {
+      const rl = await checkRateLimit(user.id, {
+        maxRequests: 200,
+        windowMs: 5 * 60 * 1000,
+        keyPrefix: "doubts:upload",
+      })
 
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { error: "Too many requests" },
-        { status: 429, headers: getRateLimitHeaders(rl, 200) },
-      )
+      if (!rl.allowed) {
+        return NextResponse.json(
+          { error: "Too many requests" },
+          { status: 429, headers: getRateLimitHeaders(rl, 200) },
+        )
+      }
     }
 
     const form = await request.formData()

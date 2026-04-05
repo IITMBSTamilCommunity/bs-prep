@@ -73,12 +73,12 @@ CREATE POLICY "Users can insert their own profile" ON user_profiles_extended
 
 -- Insert sample courses
 INSERT INTO courses (id, title, description, level, type, weeks, price, thumbnail, instructor, students_count) VALUES
-  ('qualifier-math-1', 'Mathematics 1', 'Master the fundamentals of mathematics including calculus, algebra, and trigonometry.', 'qualifier', 'free', 4, 0, '/courses/math.jpg', 'IITM BS Faculty', 2450),
-  ('qualifier-stats-1', 'Statistics 1', 'Learn statistical concepts, probability theory, and data analysis techniques.', 'qualifier', 'free', 4, 0, '/courses/stats.jpg', 'IITM BS Faculty', 1890),
-  ('qualifier-computational-thinking', 'Computational Thinking', 'Develop problem-solving skills and learn the basics of programming logic.', 'qualifier', 'free', 4, 0, '/courses/ct.jpg', 'IITM BS Faculty', 3120),
-  ('qualifier-english-1', 'English 1', 'Enhance your English language skills including grammar, comprehension, and writing.', 'qualifier', 'free', 4, 0, '/courses/english.jpg', 'IITM BS Faculty', 2780),
-  ('foundation-math-2', 'Mathematics 2', 'Advanced mathematics covering linear algebra, differential equations, and complex analysis.', 'foundation', 'paid', 12, 2500, '/courses/math.jpg', 'IITM BS Faculty', 1560),
-  ('foundation-stats-2', 'Statistics 2', 'Advanced statistical methods, hypothesis testing, and regression analysis.', 'foundation', 'paid', 12, 2500, '/courses/stats.jpg', 'IITM BS Faculty', 1230),
-  ('foundation-programming-python', 'Programming in Python', 'Learn Python from basics to advanced concepts including data structures and algorithms.', 'foundation', 'paid', 12, 3000, '/courses/ct.jpg', 'IITM BS Faculty', 2890),
-  ('foundation-english-2', 'English 2', 'Advanced English communication, business writing, and presentation skills.', 'foundation', 'paid', 12, 2000, '/courses/english.jpg', 'IITM BS Faculty', 1450)
+  ('qualifier-math-1', 'Mathematics 1', 'Master the fundamentals of mathematics including calculus, algebra, and trigonometry.', 'qualifier', 'free', 4, 0, '/courses/math.png', 'IITM BS Faculty', 2450),
+  ('qualifier-stats-1', 'Statistics 1', 'Learn statistical concepts, probability theory, and data analysis techniques.', 'qualifier', 'free', 4, 0, '/courses/stats.png', 'IITM BS Faculty', 1890),
+  ('qualifier-computational-thinking', 'Computational Thinking', 'Develop problem-solving skills and learn the basics of programming logic.', 'qualifier', 'free', 4, 0, '/courses/ct.png', 'IITM BS Faculty', 3120),
+  ('qualifier-english-1', 'English 1', 'Enhance your English language skills including grammar, comprehension, and writing.', 'qualifier', 'free', 4, 0, '/courses/english.png', 'IITM BS Faculty', 2780),
+  ('foundation-math-2', 'Mathematics 2', 'Advanced mathematics covering linear algebra, differential equations, and complex analysis.', 'foundation', 'paid', 12, 2500, '/courses/math.png', 'IITM BS Faculty', 1560),
+  ('foundation-stats-2', 'Statistics 2', 'Advanced statistical methods, hypothesis testing, and regression analysis.', 'foundation', 'paid', 12, 2500, '/courses/stats.png', 'IITM BS Faculty', 1230),
+  ('foundation-programming-python', 'Programming in Python', 'Learn Python from basics to advanced concepts including data structures and algorithms.', 'foundation', 'paid', 12, 3000, '/courses/ct.png', 'IITM BS Faculty', 2890),
+  ('foundation-english-2', 'English 2', 'Advanced English communication, business writing, and presentation skills.', 'foundation', 'paid', 12, 2000, '/courses/english.png', 'IITM BS Faculty', 1450)
 ON CONFLICT (id) DO NOTHING;

@@ -30,7 +30,7 @@ const BUNDLE_COURSES = [
     id: "qualifier-math-1",
     title: "Mathematics for Data Science I",
     description: "Fundamental math concepts essential for data science",
-    thumbnail: "/courses/math.jpg",
+    thumbnail: "/courses/math.png",
     weeks: 4,
     individualPrice: 499,
     syllabus: [
@@ -44,7 +44,7 @@ const BUNDLE_COURSES = [
     id: "qualifier-stats-1",
     title: "Statistics for Data Science I",
     description: "Statistical thinking and analysis from the ground up",
-    thumbnail: "/courses/stats.jpg",
+    thumbnail: "/courses/stats.png",
     weeks: 4,
     individualPrice: 499,
     syllabus: [
@@ -58,7 +58,7 @@ const BUNDLE_COURSES = [
     id: "qualifier-computational-thinking",
     title: "Computational Thinking",
     description: "Problem-solving and algorithmic thinking fundamentals",
-    thumbnail: "/courses/ct.jpg",
+    thumbnail: "/courses/ct.png",
     weeks: 4,
     individualPrice: 499,
     syllabus: [

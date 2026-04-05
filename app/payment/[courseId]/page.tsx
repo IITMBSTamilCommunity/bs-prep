@@ -29,7 +29,7 @@ const coursePaymentData: Record<string, any> = {
     level: "qualifier",
     price: 99,
     description: "Fundamental mathematics concepts for data science",
-    thumbnail: "/courses/math.jpg",
+    thumbnail: "/courses/math.png",
     weeks: 4,
   },
   "qualifier-stats-1": {
@@ -37,7 +37,7 @@ const coursePaymentData: Record<string, any> = {
     level: "qualifier",
     price: 99,
     description: "Introduction to statistical thinking and analysis",
-    thumbnail: "/courses/stats.jpg",
+    thumbnail: "/courses/stats.png",
     weeks: 4,
   },
   "qualifier-computational-thinking": {
@@ -45,7 +45,7 @@ const coursePaymentData: Record<string, any> = {
     level: "qualifier",
     price: 99,
     description: "Problem-solving and algorithmic thinking fundamentals",
-    thumbnail: "/courses/ct.jpg",
+    thumbnail: "/courses/ct.png",
     weeks: 4,
   },
 }

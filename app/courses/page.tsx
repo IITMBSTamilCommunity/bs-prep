@@ -43,7 +43,7 @@ const courses: Course[] = [
     courseType: "course",
     weeks: 4,
     description: "Master fundamental math concepts",
-    thumbnail: "/courses/math.jpg",
+    thumbnail: "/courses/math.png",
     price: 99, originalPrice: 499,
     available: true,
     withCertificate: true
@@ -56,7 +56,7 @@ const courses: Course[] = [
     courseType: "course",
     weeks: 4,
     description: "Learn statistical thinking & analysis",
-    thumbnail: "/courses/stats.jpg",
+    thumbnail: "/courses/stats.png",
     price: 99, originalPrice: 499,
     available: true,
     withCertificate: true
@@ -69,7 +69,7 @@ const courses: Course[] = [
     courseType: "course",
     weeks: 4,
     description: "Build problem-solving skills",
-    thumbnail: "/courses/ct.jpg",
+    thumbnail: "/courses/ct.png",
     price: 99, originalPrice: 499,
     available: true,
     withCertificate: true
@@ -82,7 +82,7 @@ const courses: Course[] = [
     courseType: "course",
     weeks: 4,
     description: "Essential communication skills",
-    thumbnail: "/courses/english.jpg",
+    thumbnail: "/courses/english.png",
     price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
@@ -97,7 +97,7 @@ const courses: Course[] = [
     courseType: "course",
     weeks: 12,
     description: "Advanced mathematical concepts",
-    thumbnail: "/courses/math.jpg",
+    thumbnail: "/courses/math.png",
     price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
@@ -110,7 +110,7 @@ const courses: Course[] = [
     courseType: "course",
     weeks: 12,
     description: "Advanced statistical methods",
-    thumbnail: "/courses/stats.jpg",
+    thumbnail: "/courses/stats.png",
     price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
@@ -123,7 +123,7 @@ const courses: Course[] = [
     courseType: "course",
     weeks: 12,
     description: "Python for data analysis",
-    thumbnail: "/courses/ct.jpg",
+    thumbnail: "/courses/ct.png",
     price: 99, originalPrice: 499,
     available: false,
     withCertificate: true
@@ -136,7 +136,7 @@ const courses: Course[] = [
     courseType: "course",
     weeks: 12,
     description: "Advanced communication skills",
-    thumbnail: "/courses/english.jpg",
+    thumbnail: "/courses/english.png",
     price: 99, originalPrice: 499,
     available: false,
     withCertificate: true

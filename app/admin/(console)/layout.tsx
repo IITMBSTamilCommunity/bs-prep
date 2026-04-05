@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { BadgeCheck, LayoutDashboard, LogOut, Megaphone, MessageSquare, Users } from "lucide-react"
+import { BadgeCheck, BarChart2, LayoutDashboard, LogOut, Megaphone, MessageSquare, Users } from "lucide-react"
 import { hasAdminRole } from "@/lib/security/admin-role"
 import { AdminRefreshButton } from "@/components/admin-refresh-button"
 
@@ -58,6 +58,12 @@ export default async function AdminConsoleLayout({ children }: AdminLayoutProps)
       active: true,
     },
     {
+      label: "Analytics",
+      href: "/admin/analytics",
+      icon: BarChart2,
+      active: true,
+    },
+    {
       label: "Settings",
       href: "/admin/details",
       icon: BadgeCheck,
@@ -86,11 +92,10 @@ export default async function AdminConsoleLayout({ children }: AdminLayoutProps)
                 <Link
                   key={item.label}
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
-                    item.active
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${item.active
                       ? "bg-[#121720] text-slate-100"
                       : "text-slate-300 hover:bg-white/5 hover:text-white"
-                  }`}
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}

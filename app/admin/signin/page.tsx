@@ -49,7 +49,7 @@ export default function AdminSignInPage() {
             disabled={isLoading}
             className="mt-7 flex h-12 w-full items-center justify-center gap-3 rounded-lg bg-white text-base font-medium text-slate-900 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <img src="/google-logo.svg" alt="Google" className="h-5 w-5" />
+            <img src="https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/google-logo.svg" alt="Google" className="h-5 w-5" />
             {isLoading ? "Signing in..." : "Continue with Google"}
           </button>
 

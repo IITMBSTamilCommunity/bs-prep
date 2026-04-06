@@ -1,5 +1,5 @@
 <p align="center" style = "border-radius: 50px;">
-	<img src="public/logo.jpeg" alt="BSPrep Logo" width="90"/>
+	<img src="https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/logo.jpeg" alt="BSPrep Logo" width="90"/>
 </p>
 
 <h1 align="center">BSPrep</h1>
@@ -39,19 +39,19 @@ BSPrep is a full-stack web platform focused on helping IITM BS learners stay con
 ## Showcase
 
 ### Hero Section
-![Hero section](public/readme/hero-section.png)
+![Hero section](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/hero-section.png)
 
 ### Dashboard Preview
-![Dashboard preview](public/readme/dashboard-preview.png)
+![Dashboard preview](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/dashboard-preview.png)
 
 ### Payment Flow Preview
-![Payment flow preview](public/readme/payment-preview.png)
+![Payment flow preview](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/payment-preview.png)
 
 ### Courses Page
-![Courses page](public/readme/courses-grid.png)
+![Courses page](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/courses-grid.png)
 
 ### Why BSPrep
-![Community page](public/readme/why-bsprep.png)
+![Community page](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/why-bsprep.png)
 
 
 ## Tech Stack

@@ -29,7 +29,7 @@ const coursePaymentData: Record<string, any> = {
     level: "qualifier",
     price: 99,
     description: "Fundamental mathematics concepts for data science",
-    thumbnail: "/courses/math.png",
+    thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/math.png",
     weeks: 4,
   },
   "qualifier-stats-1": {
@@ -37,7 +37,7 @@ const coursePaymentData: Record<string, any> = {
     level: "qualifier",
     price: 99,
     description: "Introduction to statistical thinking and analysis",
-    thumbnail: "/courses/stats.png",
+    thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/stats.png",
     weeks: 4,
   },
   "qualifier-computational-thinking": {
@@ -45,7 +45,7 @@ const coursePaymentData: Record<string, any> = {
     level: "qualifier",
     price: 99,
     description: "Problem-solving and algorithmic thinking fundamentals",
-    thumbnail: "/courses/ct.png",
+    thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/ct.png",
     weeks: 4,
   },
 }
@@ -145,7 +145,7 @@ export default function PaymentPage() {
         currency: 'INR',
         name: 'BSPrep',
         description: course.title,
-        image: '/logo.jpeg',
+        image: 'https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/logo.jpeg',
         order_id: orderData.orderId,
         
         // Prefill customer details

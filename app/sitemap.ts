@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next"
 import { createClient } from "@supabase/supabase-js"
 
-const BASE_URL = "https://bsprep.in"
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://bsprep.in"
 
 // Static public routes with SEO priority/frequency hints
 const staticRoutes: MetadataRoute.Sitemap = [
@@ -39,12 +39,6 @@ const staticRoutes: MetadataRoute.Sitemap = [
     url: `${BASE_URL}/resources`,
     lastModified: new Date(),
     changeFrequency: "weekly",
-    priority: 0.7,
-  },
-  {
-    url: `${BASE_URL}/compiler`,
-    lastModified: new Date(),
-    changeFrequency: "monthly",
     priority: 0.6,
   },
   {

@@ -4,11 +4,12 @@ import { createServiceRoleClient } from "@/lib/supabase/server"
 async function getPortalStats() {
   const service = createServiceRoleClient()
 
-  const [{ count: userCount }, { count: announcementCount }, { count: adminCount }, { count: doubtCount }] = await Promise.all([
+  const [{ count: userCount }, { count: announcementCount }, { count: adminCount }, { count: doubtCount }, { count: resourceNotesCount }] = await Promise.all([
     service.from("profiles").select("id", { count: "exact", head: true }),
     service.from("announcements").select("id", { count: "exact", head: true }),
     service.from("profiles").select("id", { count: "exact", head: true }).eq("role", "admin"),
     service.from("doubts").select("id", { count: "exact", head: true }),
+    service.from("resources_notes").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ])
 
   return {
@@ -16,6 +17,7 @@ async function getPortalStats() {
     announcements: announcementCount ?? 0,
     admins: adminCount ?? 0,
     doubts: doubtCount ?? 0,
+    pendingResourcesNotes: resourceNotesCount ?? 0,
   }
 }
 
@@ -53,6 +55,12 @@ export default async function AdminPage() {
       description: "Reply to student doubts and track resolution status.",
       href: "/admin/doubts",
       value: stats.doubts,
+    },
+    {
+      title: "Resources Notes",
+      description: "Approve or reject submitted notes links.",
+      href: "/admin/resources-notes",
+      value: stats.pendingResourcesNotes,
     },
     {
       title: "Settings",

@@ -8,7 +8,7 @@ type Donation = {
   name: string
   email: string
   amount: number
-  upi_reference_id: string
+  razorpay_payment_id: string | null
   contributor_image_url: string | null
   show_public: boolean
   note: string | null
@@ -99,7 +99,7 @@ export default function AdminDonationsPage() {
       return (
         item.name.toLowerCase().includes(query) ||
         item.email.toLowerCase().includes(query) ||
-        item.upi_reference_id.toLowerCase().includes(query)
+        (item.razorpay_payment_id && item.razorpay_payment_id.toLowerCase().includes(query))
       )
     })
   }, [donations, search])
@@ -138,7 +138,7 @@ export default function AdminDonationsPage() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-4xl font-semibold uppercase italic tracking-tight text-white">Donations</h1>
-          <p className="mt-1 text-sm text-slate-400">View who paid, donation amount, UPI reference, and supporter image.</p>
+          <p className="mt-1 text-sm text-slate-400">View who paid, donation amount, payment ID, and supporter image.</p>
         </div>
 
         <label className="flex h-11 w-full max-w-xs items-center gap-2 rounded-xl border border-white/10 bg-[#131821] px-3 text-sm text-slate-400">
@@ -146,7 +146,7 @@ export default function AdminDonationsPage() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search name, email, UPI ref"
+            placeholder="Search name, email, payment ID"
             className="h-full w-full bg-transparent text-slate-200 outline-none placeholder:text-slate-500"
           />
         </label>
@@ -167,7 +167,7 @@ export default function AdminDonationsPage() {
         <div className="grid grid-cols-[2.2fr_1.1fr_1.4fr_0.9fr_0.9fr_1.2fr] border-b border-white/10 px-6 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           <p>Contributor</p>
           <p>Amount</p>
-          <p>UPI Reference</p>
+          <p>Payment ID</p>
           <p>Status</p>
           <p>Public</p>
           <p>Actions</p>
@@ -217,7 +217,7 @@ export default function AdminDonationsPage() {
                   {Number(item.amount).toFixed(2)}
                 </p>
 
-                <p className="text-xs text-slate-300">{item.upi_reference_id}</p>
+                <p className="text-xs text-slate-300">{item.razorpay_payment_id ? item.razorpay_payment_id.substring(0, 12) + "..." : "N/A"}</p>
 
                 <p
                   className={`text-xs font-semibold uppercase tracking-wide ${

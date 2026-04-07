@@ -22,7 +22,7 @@ export async function GET(_request: NextRequest) {
     const service = createServiceRoleClient()
     const { data, error } = await service
       .from("donations")
-      .select("id, name, email, amount, upi_reference_id, contributor_image_url, show_public, note, status, submitted_at")
+      .select("id, name, email, amount, razorpay_payment_id, contributor_image_url, show_public, note, status, submitted_at")
       .order("submitted_at", { ascending: false })
 
     if (error) {

@@ -2,7 +2,7 @@ type DonationThankYouInput = {
   donorName: string
   donorEmail: string
   amount: number
-  upiReferenceId: string
+  upiReferenceId?: string
 }
 
 type ResendEmailPayload = {
@@ -50,7 +50,7 @@ export async function sendDonationThankYouEmail(input: DonationThankYouInput): P
 
   const donorName = escapeHtml(input.donorName)
   const donorEmail = escapeHtml(input.donorEmail)
-  const upiReferenceId = escapeHtml(input.upiReferenceId)
+  const upiReferenceId = input.upiReferenceId ? escapeHtml(input.upiReferenceId) : null
   const amount = Number.isFinite(input.amount) ? input.amount.toFixed(2) : "0.00"
 
   await sendWithResend({
@@ -69,7 +69,7 @@ export async function sendDonationThankYouEmail(input: DonationThankYouInput): P
         <p style="margin: 0;">Name: ${donorName}</p>
         <p style="margin: 0;">Email: ${donorEmail}</p>
         <p style="margin: 0;">Amount: INR ${amount}</p>
-        <p style="margin: 0;">UPI Reference ID: ${upiReferenceId}</p>
+        ${upiReferenceId ? `<p style="margin: 0;">UPI Reference ID: ${upiReferenceId}</p>` : ""}
 
         <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 18px 0;" />
 

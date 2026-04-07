@@ -1,10 +1,18 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { createClient } from "@/lib/supabase/client"
-import { Heart, ImagePlus, Loader2, ShieldCheck } from "lucide-react"
+import { Heart, ShieldCheck } from "lucide-react"
+import { RazorpayButton } from "@/components/razorpay/razorpay-button"
+import { PostPaymentModal } from "@/components/razorpay/post-payment-modal"
+
+const BeamsBackground = dynamic(() => import("@/components/beams-background").then((mod) => ({ default: mod.BeamsBackground })), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 -z-10 bg-white" />,
+})
 
 type PublicDonation = {
   id: string
@@ -13,18 +21,6 @@ type PublicDonation = {
   contributor_image_url: string | null
   note: string | null
   submitted_at: string
-}
-
-function toFriendlyErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof TypeError && error.message.toLowerCase().includes("fetch")) {
-    return "Network issue detected. Please check your connection and try again."
-  }
-
-  if (error instanceof Error && error.message.trim()) {
-    return error.message
-  }
-
-  return fallback
 }
 
 function resolveContributorImageUrl(url: string | null): string | null {
@@ -55,28 +51,32 @@ function resolveContributorImageUrl(url: string | null): string | null {
 export default function DonatePage() {
   const supabase = createClient()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [amount, setAmount] = useState("")
-  const [upiReferenceId, setUpiReferenceId] = useState("")
-  const [note, setNote] = useState("")
-  const [showPublic, setShowPublic] = useState(true)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [submitted, setSubmitted] = useState(false)
+  const [defaultDonorName, setDefaultDonorName] = useState("")
+  const [defaultDonorEmail, setDefaultDonorEmail] = useState("")
 
   const [supporters, setSupporters] = useState<PublicDonation[]>([])
   const [loadingSupporters, setLoadingSupporters] = useState(true)
 
-  const configuredUpiId = process.env.NEXT_PUBLIC_DONATION_UPI_ID?.trim()
-  const upiId = !configuredUpiId || configuredUpiId.toLowerCase() === "yourname@upi" ? "bsprep@ptyes" : configuredUpiId
+  // Payment flow state
+  const [paymentProcessing, setPaymentProcessing] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null)
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const paymentSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [supporterPage, setSupporterPage] = useState(0)
+  const supportersPerPage = 50
 
   const sortedSupporters = useMemo(
     () => [...supporters].sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()),
     [supporters],
+  )
+
+  const totalSupporterPages = Math.max(1, Math.ceil(sortedSupporters.length / supportersPerPage))
+  const paginatedSupporters = sortedSupporters.slice(
+    supporterPage * supportersPerPage,
+    (supporterPage + 1) * supportersPerPage,
   )
 
   useEffect(() => {
@@ -86,11 +86,13 @@ export default function DonatePage() {
       } = await supabase.auth.getUser()
 
       setIsAuthenticated(!!user)
-
       if (user) {
-        const fullName = `${user.user_metadata?.first_name ?? ""} ${user.user_metadata?.last_name ?? ""}`.trim()
-        if (fullName) setName(fullName)
-        if (user.email) setEmail(user.email)
+        const firstName = typeof user.user_metadata?.first_name === "string" ? user.user_metadata.first_name.trim() : ""
+        const lastName = typeof user.user_metadata?.last_name === "string" ? user.user_metadata.last_name.trim() : ""
+        const fullName = [firstName, lastName].filter(Boolean).join(" ")
+
+        setDefaultDonorName(fullName)
+        setDefaultDonorEmail(user.email || "")
       }
 
       try {
@@ -109,85 +111,75 @@ export default function DonatePage() {
     void bootstrap()
   }, [supabase])
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    setSubmitError(null)
-    setSubmitted(false)
-    setIsSubmitting(true)
-
-    try {
-      let contributorImageUrl: string | null = null
-
-      if (imageFile) {
-        const uploadData = new FormData()
-        uploadData.append("file", imageFile)
-
-        const uploadRes = await fetch("/api/donations/upload", {
-          method: "POST",
-          body: uploadData,
-        })
-
-        const uploadPayload = await uploadRes.json()
-        if (!uploadRes.ok) {
-          throw new Error(uploadPayload.error || "Failed to upload image")
-        }
-
-        contributorImageUrl = uploadPayload.url
-      }
-
-      const payload = {
-        name,
-        email,
-        amount,
-        upiReferenceId,
-        note,
-        showPublic,
-        contributorImageUrl,
-      }
-
-      const res = await fetch("/api/donations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to submit donation details")
-      }
-
-      setSubmitted(true)
-      setAmount("")
-      setUpiReferenceId("")
-      setNote("")
-      setImageFile(null)
-
-      try {
-        const supportersRes = await fetch("/api/donations", { cache: "no-store" })
-        if (supportersRes.ok) {
-          const refreshed = await supportersRes.json()
-          setSupporters(Array.isArray(refreshed.donations) ? refreshed.donations : [])
-        }
-      } catch (error) {
-        console.error("Failed to refresh supporters after submit:", error)
-      }
-    } catch (error) {
-      setSubmitError(toFriendlyErrorMessage(error, "Something went wrong"))
-    } finally {
-      setIsSubmitting(false)
-    }
+  function handlePaymentSuccess(orderId: string, paymentId: string) {
+    setCurrentOrderId(orderId)
+    setCurrentPaymentId(paymentId)
+    setPaymentError(null)
+    setShowPaymentModal(true)
   }
 
+  function handlePaymentError(error: string) {
+    setPaymentError(error)
+    setShowPaymentModal(false)
+    setCurrentPaymentId(null)
+    setCurrentOrderId(null)
+  }
+
+  function handlePaymentModalClose() {
+    setShowPaymentModal(false)
+    setCurrentPaymentId(null)
+    setCurrentOrderId(null)
+  }
+
+  function handlePaymentModalSuccess() {
+    if (paymentSuccessTimerRef.current) {
+      clearTimeout(paymentSuccessTimerRef.current)
+    }
+
+    setPaymentSuccess(true)
+    setShowPaymentModal(false)
+    setCurrentPaymentId(null)
+    setCurrentOrderId(null)
+    setPaymentError(null)
+    setSupporterPage(0)
+
+    // Refresh supporters list
+    setTimeout(() => {
+      fetch("/api/donations", { cache: "no-store" })
+        .then((res) => {
+          if (res.ok) return res.json()
+          throw new Error("Failed to fetch")
+        })
+        .then((data) => {
+          setSupporters(Array.isArray(data.donations) ? data.donations : [])
+        })
+        .catch((error) => console.error("Failed to refresh supporters:", error))
+    }, 1000)
+
+    paymentSuccessTimerRef.current = setTimeout(() => {
+      setPaymentSuccess(false)
+      paymentSuccessTimerRef.current = null
+    }, 10 * 1000)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (paymentSuccessTimerRef.current) {
+        clearTimeout(paymentSuccessTimerRef.current)
+      }
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-black">
+    <div className="relative min-h-screen bg-white text-black">
+      <BeamsBackground />
       <Navbar isAuthenticated={isAuthenticated} />
 
       <section className="mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 lg:px-8 lg:pt-20">
         <div className="grid gap-8 lg:grid-cols-2">
+          {/* Left Column - Donation Info */}
           <div className="space-y-6">
-            <div className="rounded-3xl border border-[#E5DBC8] bg-white p-7 shadow-sm">
+            <div className="rounded-3xl border border-black/10 bg-[#FAF8F5]/95 p-7 shadow-sm backdrop-blur-[1px]">
               <p className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-700">
                 <Heart className="h-4 w-4" />
                 Support BSPREP
@@ -200,7 +192,7 @@ export default function DonatePage() {
                 If you find our content helpful, you can support us to keep improving and creating more valuable resources.
               </p>
 
-              <div className="mt-6 rounded-2xl border border-[#E5DBC8] bg-[#FFFDF8] p-5">
+              <div className="mt-6 rounded-2xl border border-black/10 bg-white p-5">
                 <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Your support helps us</p>
                 <ul className="mt-3 space-y-2 text-sm text-slate-700">
                   <li>Create high-quality data science content</li>
@@ -210,223 +202,181 @@ export default function DonatePage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-[#E5DBC8] bg-white p-7 shadow-sm">
-              <h2 className="text-2xl font-bold">Contribute via UPI</h2>
-              <p className="mt-2 text-sm text-slate-600">Scan the QR or pay using Google Pay, PhonePe, Paytm, or any UPI app.</p>
-
-              <div className="mt-6 grid gap-5 sm:grid-cols-[220px_1fr] sm:items-center">
-                <img
-                  src="/donate-qr.jpeg"
-                  alt="UPI QR for BSPREP donation"
-                  className="w-[220px] rounded-2xl border border-[#E5DBC8] bg-white p-3"
-                  onError={(event) => {
-                    event.currentTarget.src = "/donate-qr-placeholder.svg"
-                  }}
-                />
-
-                <div className="rounded-2xl border border-dashed border-[#D6C8AD] bg-[#FFF8EA] p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-[#8A5A00]">UPI ID</p>
-                  <p className="mt-1 text-lg font-bold text-[#4A3200]">{upiId}</p>
-                  <p className="mt-2 text-sm text-[#6B4A12]">After payment, please enter your UPI reference ID in the form so our team can verify and acknowledge your support quickly.</p>
-                </div>
-              </div>
-            </div>
+            
           </div>
 
-          <div className="flex">
-            {submitted ? (
-              <div className="flex h-full w-full flex-col justify-center rounded-3xl border border-emerald-200 bg-emerald-50 p-7 text-emerald-900 shadow-sm">
-                <h3 className="text-2xl font-bold">Thank You for Your Support!</h3>
+          {/* Right Column - Payment + Easy & Secure */}
+          <div className="space-y-6">
+            {paymentSuccess ? (
+              <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-7 text-emerald-900 shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-xl text-white">✓</div>
+                <h3 className="mt-3 text-2xl font-bold">Thank You!</h3>
                 <p className="mt-3 text-sm leading-7">
-                  Your contribution means a lot to us. Because of your support, BSPREP can continue building high-quality data science content and make learning accessible to more students.
+                  Your support has been received successfully. We're grateful for your contribution to BSPREP.
                 </p>
-                <p className="mt-3 text-sm leading-7">Every contribution, big or small, helps us improve the platform, create better learning resources, and support more learners.</p>
-                <p className="mt-3 text-sm leading-7">Your support has been received successfully. If you submitted your details, we will acknowledge your contribution soon.</p>
-                <p className="mt-3 text-sm font-semibold">From the BSPREP Team, thank you for believing in what we are building.</p>
-                <p className="mt-1 text-sm font-semibold">Keep learning. Keep growing.</p>
+                <p className="mt-3 text-sm leading-7">
+                  An email confirmation has been sent to you. Your name may also appear on our supporter wall.
+                </p>
+                <p className="mt-4 text-sm font-semibold">Keep learning. Keep growing.</p>
               </div>
             ) : (
-              <div className="flex h-full w-full flex-col justify-center rounded-3xl border border-[#E5DBC8] bg-white p-7 shadow-sm">
-                <h2 className="text-2xl font-bold">After Payment</h2>
-                <p className="mt-2 text-sm text-slate-600">Please submit your details so we can verify and acknowledge your support.</p>
+              <div className="rounded-3xl border border-black/10 bg-[#FAF8F5]/95 p-7 shadow-sm backdrop-blur-[1px]">
+                <h2 className="text-2xl font-bold">Support Us Today</h2>
+                <p className="mt-2 text-sm text-slate-600">Enter your desired amount and proceed to secure payment via Razorpay.</p>
 
-                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Name</label>
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      className="h-11 w-full rounded-xl border border-[#D9D4CA] px-3 text-sm outline-none focus:border-black"
-                      placeholder="Your full name"
-                    />
-                  </div>
+                <div className="mt-6 space-y-4">
+                  <RazorpayButton
+                    onPaymentSuccess={handlePaymentSuccess}
+                    onPaymentError={handlePaymentError}
+                  />
 
-                  <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Email</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="h-11 w-full rounded-xl border border-[#D9D4CA] px-3 text-sm outline-none focus:border-black"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-sm font-semibold text-slate-700">Amount</label>
-                      <input
-                        type="number"
-                        min="1"
-                        step="0.01"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        required
-                        className="h-11 w-full rounded-xl border border-[#D9D4CA] px-3 text-sm outline-none focus:border-black"
-                        placeholder="Amount paid"
-                      />
+                  {paymentError && (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                      {paymentError}
                     </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-semibold text-slate-700">UPI Reference ID</label>
-                      <input
-                        value={upiReferenceId}
-                        onChange={(e) => setUpiReferenceId(e.target.value)}
-                        required
-                        className="h-11 w-full rounded-xl border border-[#D9D4CA] px-3 text-sm outline-none focus:border-black"
-                        placeholder="UPI transaction ref"
-                      />
-                    </div>
-                  </div>
+                  )}
 
-                  <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Supporter Image (optional)</label>
-                    <label className="flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-[#D9D4CA] px-3 text-sm text-slate-600 hover:border-black">
-                      <ImagePlus className="h-4 w-4" />
-                      <span>{imageFile ? imageFile.name : "Upload your photo/logo"}</span>
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/jpg,image/webp"
-                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Message (optional)</label>
-                    <textarea
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      maxLength={200}
-                      className="min-h-[90px] w-full rounded-xl border border-[#D9D4CA] px-3 py-2 text-sm outline-none focus:border-black"
-                      placeholder="Add a short message"
-                    />
-                  </div>
-
-                  <label className="flex items-start gap-3 rounded-xl border border-[#E5DBC8] bg-[#FFFDF8] p-3 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={showPublic}
-                      onChange={(e) => setShowPublic(e.target.checked)}
-                      className="mt-0.5"
-                    />
-                    Show my name and contribution on BSPREP supporter wall.
-                  </label>
-
-                  {submitError ? (
-                    <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{submitError}</p>
-                  ) : null}
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-black px-4 text-sm font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {isSubmitting ? "Submitting..." : "Submit Donation Details"}
-                  </button>
-                </form>
+                  <p className="text-xs text-slate-500">
+                    We partner with Razorpay, India's leading payment gateway, for secure and reliable transactions.
+                  </p>
+                </div>
               </div>
             )}
+
+            <div className="rounded-3xl border border-black/10 bg-[#FAF8F5]/95 p-7 shadow-sm backdrop-blur-[1px]">
+              <h2 className="text-2xl font-bold">Easy & Secure</h2>
+              <ul className="mt-4 space-y-3 text-sm text-slate-700">
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 inline-block h-2 w-2 rounded-full bg-rose-600 flex-shrink-0"></span>
+                  <span>
+                    <strong>Choose Amount:</strong> Select any amount you're comfortable with
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 inline-block h-2 w-2 rounded-full bg-rose-600 flex-shrink-0"></span>
+                  <span>
+                    <strong>Secure Payment:</strong> Powered by Razorpay with bank-level encryption
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 inline-block h-2 w-2 rounded-full bg-rose-600 flex-shrink-0"></span>
+                  <span>
+                    <strong>Share Your Story:</strong> After payment, tell us about yourself (optional)
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 inline-block h-2 w-2 rounded-full bg-rose-600 flex-shrink-0"></span>
+                  <span>
+                    <strong>Get Recognized:</strong> Join our supporter wall (if you choose)
+                  </span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
+        {/* Security Info Section */}
         <section className="mt-10 rounded-3xl border border-blue-200 bg-blue-50 p-7 text-slate-900 shadow-sm">
           <div className="flex items-start gap-3">
             <ShieldCheck className="h-6 w-6 flex-shrink-0 text-blue-600" />
             <div>
-              <h3 className="text-xl font-bold text-blue-900">Secure Payment & Data Privacy</h3>
+              <h3 className="text-xl font-bold text-blue-900">Secure & Private</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">
-                Your payment information is encrypted and secure. We use industry-standard security measures and trusted UPI gateways to protect your data. All donations are processed securely, and your personal information is never shared with third parties.
+                Your payment is processed through Razorpay, India's most trusted payment gateway. All transactions are encrypted with bank-level security. We never store your card details.
               </p>
               <ul className="mt-4 space-y-2 text-sm text-slate-700">
                 <li className="flex items-start gap-2">
                   <span className="mt-1 inline-block h-2 w-2 rounded-full bg-blue-600 flex-shrink-0"></span>
-                  <span>Bank-level encryption for all transactions</span>
+                  <span>PCI DSS Level 1 compliance</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-1 inline-block h-2 w-2 rounded-full bg-blue-600 flex-shrink-0"></span>
-                  <span>No credit card information stored on our servers</span>
+                  <span>256-bit SSL encryption for all transactions</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-1 inline-block h-2 w-2 rounded-full bg-blue-600 flex-shrink-0"></span>
-                  <span>Direct UPI payment processing for maximum security</span>
+                  <span>Your data is never shared with third parties</span>
                 </li>
               </ul>
             </div>
           </div>
         </section>
 
+        {/* Supporter Wall */}
         <section className="mt-10 rounded-3xl border border-[#E5DBC8] bg-white p-7 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-2xl font-bold">Supporter Wall</h2>
-            <p className="text-sm text-slate-600">People who chose to share their contribution publicly</p>
+            <p className="text-sm text-slate-600">Amazing people who support BSPREP</p>
           </div>
 
           {loadingSupporters ? (
             <p className="mt-4 text-sm text-slate-500">Loading supporters...</p>
           ) : sortedSupporters.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500">No public contributions yet. Be the first supporter.</p>
+            <p className="mt-4 text-sm text-slate-500">No public contributions yet. Be the first supporter!</p>
           ) : (
-            <div className="mt-6 flex flex-wrap items-start gap-4">
-              {sortedSupporters.map((item) => (
-                <article key={item.id} className="w-fit max-w-full rounded-2xl border border-[#E8E1D3] bg-[#FFFEFB] p-4 sm:max-w-[420px]">
-                  {(() => {
-                    const imageUrl = resolveContributorImageUrl(item.contributor_image_url)
-                    return (
-                  <div className="flex items-center gap-3">
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={item.name}
-                        className="h-12 w-12 rounded-full border border-[#E5DBC8] object-cover"
-                        referrerPolicy="no-referrer"
-                        onError={(event) => {
-                          event.currentTarget.style.display = "none"
-                        }}
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#E5DBC8] bg-[#FFF5E5] text-sm font-bold text-[#7C5200]">
-                        {item.name.slice(0, 1).toUpperCase()}
+            <>
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {paginatedSupporters.map((item) => (
+                  <article key={item.id} className="w-full rounded-2xl border border-[#E8E1D3] bg-[#FFFEFB] p-4">
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const imageUrl = resolveContributorImageUrl(item.contributor_image_url)
+                        return imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={item.name}
+                            className="h-12 w-12 rounded-full border border-[#E5DBC8] object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={(event) => {
+                              event.currentTarget.style.display = "none"
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#E5DBC8] bg-[#FFF5E5] text-sm font-bold text-[#7C5200]">
+                            {item.name.slice(0, 1).toUpperCase()}
+                          </div>
+                        )
+                      })()}
+                      <div>
+                        <p className="font-semibold">{item.name}</p>
+                        <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleDateString()}</p>
                       </div>
-                    )}
-                    <div>
-                      <p className="font-semibold">{item.name}</p>
-                      <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleDateString()}</p>
                     </div>
-                  </div>
-                    )
-                  })()}
 
-                  {item.note ? <p className="mt-2 break-words text-sm text-slate-600">{item.note}</p> : null}
-                </article>
-              ))}
-            </div>
+                    <p className="mt-2 break-words text-sm text-slate-600">{item.note?.trim() || "No comment"}</p>
+                  </article>
+                ))}
+              </div>
+              {totalSupporterPages > 1 ? (
+                <div className="mt-6 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSupporterPage((page) => Math.max(0, page - 1))}
+                    disabled={supporterPage === 0}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/15 bg-white text-black transition hover:border-black/30 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Previous supporters"
+                  >
+                    ←
+                  </button>
+                  <span className="text-sm text-slate-600">
+                    {supporterPage + 1} / {totalSupporterPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSupporterPage((page) => Math.min(totalSupporterPages - 1, page + 1))}
+                    disabled={supporterPage >= totalSupporterPages - 1}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/15 bg-white text-black transition hover:border-black/30 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Next supporters"
+                  >
+                    →
+                  </button>
+                </div>
+              ) : null}
+            </>
           )}
         </section>
 
+        {/* Disclaimer */}
         <section className="mt-10 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <ShieldCheck className="h-4 w-4" />
@@ -438,6 +388,19 @@ export default function DonatePage() {
           <p className="mt-3 text-sm font-semibold">Thank you for supporting BSPREP.</p>
         </section>
       </section>
+
+      {/* Payment Modal */}
+      {showPaymentModal && currentPaymentId && currentOrderId && (
+        <PostPaymentModal
+          paymentId={currentPaymentId}
+          orderId={currentOrderId}
+          defaultName={defaultDonorName}
+          defaultEmail={defaultDonorEmail}
+          onClose={handlePaymentModalClose}
+          onSuccess={handlePaymentModalSuccess}
+          onError={handlePaymentError}
+        />
+      )}
 
       <Footer />
     </div>

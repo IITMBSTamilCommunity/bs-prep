@@ -49,10 +49,16 @@ export default function SettingsPage() {
         .eq("id", user.id)
         .single()
 
+      const fallbackFirstName = typeof user.user_metadata?.first_name === "string" ? user.user_metadata.first_name : ""
+      const fallbackLastName = typeof user.user_metadata?.last_name === "string" ? user.user_metadata.last_name : ""
+
       if (profile) {
-        setFirstName(profile.first_name ?? "")
-        setLastName(profile.last_name ?? "")
+        setFirstName(profile.first_name ?? fallbackFirstName)
+        setLastName(profile.last_name ?? fallbackLastName)
         setRole(profile.role ?? "student")
+      } else {
+        setFirstName(fallbackFirstName)
+        setLastName(fallbackLastName)
       }
       setLoadingProfile(false)
     }

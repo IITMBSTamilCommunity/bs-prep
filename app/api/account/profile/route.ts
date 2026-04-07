@@ -33,20 +33,39 @@ export async function PATCH(request: NextRequest) {
     }
 
     const service = createServiceRoleClient()
+    const profilePayload = {
+      id: user.id,
+      email: user.email ?? "",
+      first_name: firstNameValidation.sanitized || null,
+      last_name: lastNameValidation.sanitized || null,
+      updated_at: new Date().toISOString(),
+    }
+
     const { data: profile, error: updateError } = await service
       .from("profiles")
-      .update({
-        first_name: firstNameValidation.sanitized || null,
-        last_name: lastNameValidation.sanitized || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id)
+      .upsert(profilePayload, { onConflict: "id" })
       .select("id, first_name, last_name")
       .single()
 
     if (updateError) {
       console.error("Settings profile update error:", updateError)
       return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
+    }
+
+    const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim()
+    const metadataUpdate = {
+      ...user.user_metadata,
+      first_name: profile?.first_name ?? null,
+      last_name: profile?.last_name ?? null,
+      full_name: fullName || null,
+    }
+
+    const { error: metadataError } = await service.auth.admin.updateUserById(user.id, {
+      user_metadata: metadataUpdate,
+    })
+
+    if (metadataError) {
+      console.warn("Settings profile metadata sync warning:", metadataError)
     }
 
     return NextResponse.json({ success: true, profile })

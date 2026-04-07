@@ -84,19 +84,40 @@ export async function PATCH(request: NextRequest) {
 
     const service = createServiceRoleClient()
     const updatePayload: Record<string, string | null> = {
+      email: user.email ?? "",
       first_name: firstNameValidation.sanitized || null,
       last_name: lastNameValidation.sanitized || null,
     }
 
     const { data: profile, error: updateError } = await service
       .from("profiles")
-      .update(updatePayload)
-      .eq("id", user!.id)
+      .upsert(
+        {
+          id: user!.id,
+          ...updatePayload,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      )
       .select("id, email, first_name, last_name, role, created_at, avatar_url")
       .single()
 
     if (updateError) {
       return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
+    }
+
+    const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ").trim()
+    const { error: metadataError } = await service.auth.admin.updateUserById(user!.id, {
+      user_metadata: {
+        ...user!.user_metadata,
+        first_name: profile?.first_name ?? null,
+        last_name: profile?.last_name ?? null,
+        full_name: fullName || null,
+      },
+    })
+
+    if (metadataError) {
+      console.warn("Admin profile metadata sync warning:", metadataError)
     }
 
     const metadataAvatar =

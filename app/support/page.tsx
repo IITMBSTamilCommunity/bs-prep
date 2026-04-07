@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import dynamic from "next/dynamic"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
@@ -10,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MessageSquare, Star, Send, MessageCircle } from "lucide-react"
+import { MessageSquare, Star, Send, MessageCircle, Heart } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 const BeamsBackground = dynamic(() => import("@/components/beams-background").then(mod => ({ default: mod.BeamsBackground })), {
@@ -44,6 +45,7 @@ export default function SupportPage() {
   })
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSuccess, setFeedbackSuccess] = useState(false)
+
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -155,6 +157,7 @@ export default function SupportPage() {
       setFeedbackSubmitting(false)
     }
   }
+
 
   if (loading) {
     return null
@@ -461,6 +464,28 @@ export default function SupportPage() {
                     )}
                   </Button>
                 </form>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border border-gray-200 hover:border-gray-400 transition-all shadow-sm">
+              <CardHeader className="space-y-3 pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-rose-50 flex items-center justify-center">
+                    <Heart className="w-6 h-6 text-rose-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-black">Support BSPREP by Donation</CardTitle>
+                    <CardDescription className="text-gray-600 text-sm mt-1">You can contribute from our dedicated donation page.</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-4">
+                  Share your support through UPI and submit contribution details, including your name and optional image, on the donation page.
+                </p>
+                <Link href="/donate" className="inline-flex w-full items-center justify-center h-12 rounded-lg bg-black text-white text-base font-semibold hover:bg-black/80 transition-colors">
+                  Open Donation Page
+                </Link>
               </CardContent>
             </Card>
 

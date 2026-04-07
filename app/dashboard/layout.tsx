@@ -7,35 +7,6 @@ import { Navbar } from "@/components/navbar"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-function formatSupabaseError(error: unknown) {
-  if (!error) return null
-
-  if (error instanceof Error) {
-    return { message: error.message }
-  }
-
-  if (typeof error === "object") {
-    const e = error as {
-      message?: string
-      code?: string
-      details?: string
-      hint?: string
-      status?: number
-      name?: string
-    }
-
-    return {
-      message: e.message ?? e.name ?? "Unknown Supabase error",
-      code: e.code,
-      details: e.details,
-      hint: e.hint,
-      status: e.status,
-    }
-  }
-
-  return { message: String(error) }
-}
-
 export default function DashboardLayout({
   children,
 }: {
@@ -66,52 +37,23 @@ export default function DashboardLayout({
 
       setUser(user)
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle()
-
-      if (error) {
-        const details = formatSupabaseError(error)
-        console.warn("Profile fetch failed, defaulting to student role:", details)
-        // Keep app usable even if role fetch fails for unexpected reasons.
-        setRole("student")
+      const roleRes = await fetch("/api/account/me", { cache: "no-store" })
+      if (!roleRes.ok) {
+        const metadataRole = typeof user.user_metadata?.role === "string" ? user.user_metadata.role : "student"
+        setRole(metadataRole)
         return
       }
 
-      if (profile) {
-        console.log("User role detected:", profile.role)
-        setRole(profile.role || "student")
-        
-        // Redirect admin/mentor to their respective dashboards
-        if (profile.role === "admin" && window.location.pathname === "/dashboard") {
-          router.push("/admin")
-        } else if (profile.role === "mentor" && window.location.pathname === "/dashboard") {
-          router.push("/dashboard/mentor/courses")
-        }
-        return
+      const roleData = await roleRes.json()
+      const detectedRole = typeof roleData?.profile?.role === "string" ? roleData.profile.role : "student"
+      setRole(detectedRole)
+
+      // Redirect admin/mentor to their respective dashboards
+      if (detectedRole === "admin" && window.location.pathname === "/dashboard") {
+        router.push("/admin")
+      } else if (detectedRole === "mentor" && window.location.pathname === "/dashboard") {
+        router.push("/dashboard/mentor/courses")
       }
-
-      // If profile row does not exist yet, create a default one and proceed as student.
-      const { error: createProfileError } = await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id: user.id,
-            email: user.email ?? null,
-            first_name: user.user_metadata?.first_name ?? "",
-            last_name: user.user_metadata?.last_name ?? "",
-            role: "student",
-          },
-          { onConflict: "id" }
-        )
-
-      if (createProfileError) {
-        console.error("Error creating default profile:", createProfileError)
-      }
-
-      setRole("student")
     }
 
     getUser()

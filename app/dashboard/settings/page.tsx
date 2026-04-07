@@ -60,6 +60,21 @@ export default function SettingsPage() {
         setFirstName(fallbackFirstName)
         setLastName(fallbackLastName)
       }
+
+      // Resolve role from server so effective admin access is reflected correctly.
+      try {
+        const roleRes = await fetch("/api/account/me", { cache: "no-store" })
+        if (roleRes.ok) {
+          const roleData = await roleRes.json()
+          const effectiveRole = typeof roleData?.profile?.role === "string" ? roleData.profile.role : null
+          if (effectiveRole) {
+            setRole(effectiveRole)
+          }
+        }
+      } catch {
+        // Keep existing role fallback from profile/user metadata.
+      }
+
       setLoadingProfile(false)
     }
     load()

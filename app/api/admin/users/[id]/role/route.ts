@@ -54,8 +54,47 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       .eq("id", id)
       .maybeSingle()
 
-    if (targetError || !targetProfile) {
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 })
+    if (targetError) {
+      return NextResponse.json({ error: "Failed to load target profile" }, { status: 500 })
+    }
+
+    if (!targetProfile) {
+      const { data: authUserData, error: authUserError } = await service.auth.admin.getUserById(id)
+      if (authUserError || !authUserData?.user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 })
+      }
+
+      const { data: createdProfile, error: createError } = await service
+        .from("profiles")
+        .upsert(
+          {
+            id,
+            email: authUserData.user.email ?? "",
+            role: nextRole,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" },
+        )
+        .select("id, role, email")
+        .single()
+
+      if (createError || !createdProfile) {
+        return NextResponse.json({ error: "Failed to update role" }, { status: 500 })
+      }
+
+      const metadata = {
+        ...(authUserData.user.user_metadata ?? {}),
+        role: nextRole,
+      }
+      const { error: metadataError } = await service.auth.admin.updateUserById(id, {
+        user_metadata: metadata,
+      })
+
+      if (metadataError) {
+        console.warn("Role metadata sync warning:", metadataError)
+      }
+
+      return NextResponse.json({ success: true, profile: createdProfile })
     }
 
     const currentRole = (targetProfile.role || "student").toLowerCase()
@@ -81,13 +120,28 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const { data: updated, error: updateError } = await service
       .from("profiles")
-      .update({ role: nextRole })
+      .update({ role: nextRole, updated_at: new Date().toISOString() })
       .eq("id", id)
       .select("id, role, email")
       .single()
 
     if (updateError) {
       return NextResponse.json({ error: "Failed to update role" }, { status: 500 })
+    }
+
+    const { data: authUserData } = await service.auth.admin.getUserById(id)
+    if (authUserData?.user) {
+      const metadata = {
+        ...(authUserData.user.user_metadata ?? {}),
+        role: nextRole,
+      }
+      const { error: metadataError } = await service.auth.admin.updateUserById(id, {
+        user_metadata: metadata,
+      })
+
+      if (metadataError) {
+        console.warn("Role metadata sync warning:", metadataError)
+      }
     }
 
     return NextResponse.json({ success: true, profile: updated })

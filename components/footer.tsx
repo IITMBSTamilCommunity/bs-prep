@@ -52,6 +52,7 @@ export function Footer() {
     { name: "Courses", href: "/courses" },
     { name: "Quiz Prep", href: "/quiz-prep" },
     { name: "Resources", href: "/resources" },
+    { name: "Donate", href: "/donate" },
     { name: "Support", href: "/support" },
     { name: "Careers", href: "/careers" },
   ]

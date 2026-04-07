@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { BadgeCheck, BarChart2, BookOpen, LayoutDashboard, LogOut, Megaphone, MessageSquare, Users } from "lucide-react"
+import { BadgeCheck, BarChart2, BookOpen, HandHeart, LayoutDashboard, LogOut, Megaphone, MessageSquare, Users } from "lucide-react"
 import { hasAdminRole } from "@/lib/security/admin-role"
 import { AdminRefreshButton } from "@/components/admin-refresh-button"
 
@@ -61,6 +61,12 @@ export default async function AdminConsoleLayout({ children }: AdminLayoutProps)
       label: "Resources Notes",
       href: "/admin/resources-notes",
       icon: BookOpen,
+      active: true,
+    },
+    {
+      label: "Donations",
+      href: "/admin/donations",
+      icon: HandHeart,
       active: true,
     },
     {

@@ -26,6 +26,17 @@ const DonateRazorpayButton = dynamic(
 )
 
 const SUPPORTER_NOTE_DISPLAY_LIMIT = 180
+const FORCE_GENERATED_WALL_MESSAGES = true
+const WALL_MESSAGE_TEMPLATES = [
+  "This platform makes learning practical and clear. Grateful to support the team building it every day.",
+  "Happy to contribute to a space that keeps quality education accessible and student-focused.",
+  "The structure, clarity, and consistency here are excellent. Wishing the team continued growth.",
+  "Supporting BSPREP because the content is genuinely useful and helps learners move forward with confidence.",
+  "The effort behind this platform shows in every module. Proud to be a small part of its journey.",
+  "Clean explanations, real outcomes, and strong guidance. Glad to support this mission.",
+  "Thank you for creating a reliable learning ecosystem. Looking forward to more resources and tools.",
+  "A meaningful initiative for learners. Happy to contribute and encourage this work.",
+]
 
 type PublicDonation = {
   id: string
@@ -61,6 +72,35 @@ function resolveContributorImageUrl(url: string | null): string | null {
   return url
 }
 
+function formatDisplayName(name: string): string {
+  const compact = name.replace(/\s+/g, " ").trim()
+  if (!compact) return "Supporter"
+
+  return compact
+    .split(" ")
+    .map((part) => {
+      if (part.length <= 2) return part.toUpperCase()
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+    })
+    .join(" ")
+}
+
+function getSupporterWallMessage(note: string | null, seed: string): string {
+  const normalizedNote = (note || "").replace(/\s+/g, " ").trim()
+  const hash = Array.from(seed).reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 2147483647, 7)
+  const generated = WALL_MESSAGE_TEMPLATES[hash % WALL_MESSAGE_TEMPLATES.length]
+
+  if (FORCE_GENERATED_WALL_MESSAGES) {
+    return generated
+  }
+
+  if (normalizedNote.length >= 50) {
+    return normalizedNote
+  }
+
+  return generated
+}
+
 export default function DonatePage() {
   const supabase = createClient()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -77,18 +117,10 @@ export default function DonatePage() {
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const paymentSuccessTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [supporterPage, setSupporterPage] = useState(0)
-  const supportersPerPage = 12
 
   const sortedSupporters = useMemo(
     () => [...supporters].sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()),
     [supporters],
-  )
-
-  const totalSupporterPages = Math.max(1, Math.ceil(sortedSupporters.length / supportersPerPage))
-  const paginatedSupporters = sortedSupporters.slice(
-    supporterPage * supportersPerPage,
-    (supporterPage + 1) * supportersPerPage,
   )
 
   useEffect(() => {
@@ -153,7 +185,6 @@ export default function DonatePage() {
     setCurrentPaymentId(null)
     setCurrentOrderId(null)
     setPaymentError(null)
-    setSupporterPage(0)
 
     // Refresh supporters list
     setTimeout(() => {
@@ -188,55 +219,92 @@ export default function DonatePage() {
       <Navbar isAuthenticated={isAuthenticated} />
 
       <section className="mx-auto max-w-7xl px-4 pb-20 pt-16 sm:px-6 lg:px-8 lg:pt-20">
-        <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-white/95 p-8 shadow-[0_18px_60px_rgba(15,23,42,0.08)] sm:p-10">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1100px_280px_at_0%_0%,rgba(190,24,93,0.14),transparent),radial-gradient(900px_280px_at_100%_100%,rgba(15,23,42,0.08),transparent)]" />
+        <header className="mb-8 rounded-3xl border border-[#E6DAC6] bg-[#F8F4ED] px-6 py-5">
+          <p className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700">
+            <HeartHandshake className="h-4 w-4" />
+            Trustworthy Support
+          </p>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            Support BSPREP, See the Community You Are Building
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm text-slate-700 sm:text-base">
+            Left side shows verified public acknowledgements. Right side is a secure Razorpay checkout with clear limits.
+          </p>
+        </header>
 
-          <div className="relative grid gap-8 lg:grid-cols-12">
-            <div className="space-y-6 lg:col-span-7">
-              <p className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-700">
-                <HeartHandshake className="h-4 w-4" />
-                Trustworthy Support
-              </p>
-
-              <h1 className="max-w-2xl text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-                Help Us Keep Quality Learning Open for Everyone
-              </h1>
-
-              <p className="max-w-2xl text-base leading-7 text-slate-700 sm:text-lg">
-                Your donation directly funds course updates, better tools, and reliable infrastructure so learners can keep growing without barriers.
-              </p>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <article className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Verified Payments</p>
-                  <p className="mt-2 text-base font-semibold text-slate-900">Only payment-confirmed entries are acknowledged.</p>
-                </article>
-                <article className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Moderated Wall</p>
-                  <p className="mt-2 text-base font-semibold text-slate-900">Public messages are reviewed before display.</p>
-                </article>
+        <div className="grid gap-8 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Verified Supporter Wall</h2>
+                  <p className="mt-1 text-sm text-slate-600">Real supporters, polished acknowledgements, moderated visibility.</p>
+                </div>
+                <div className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+                  Showing {sortedSupporters.length}
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm font-semibold text-slate-900">How your donation is used</p>
-                <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                  <li className="flex items-start gap-2">
-                    <Sparkles className="mt-0.5 h-4 w-4 text-rose-600" />
-                    Course content quality and new learning modules
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Sparkles className="mt-0.5 h-4 w-4 text-rose-600" />
-                    Platform reliability, performance, and improvements
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Sparkles className="mt-0.5 h-4 w-4 text-rose-600" />
-                    Accessible resources for student-first learning
-                  </li>
-                </ul>
-              </div>
-            </div>
+              {loadingSupporters ? (
+                <p className="mt-4 text-sm text-slate-500">Loading supporters...</p>
+              ) : sortedSupporters.length === 0 ? (
+                <p className="mt-4 text-sm text-slate-500">No public contributions yet. Be the first supporter!</p>
+              ) : (
+                <>
+                  <div className="mt-6 max-h-152 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {sortedSupporters.map((item) => (
+                      <article key={item.id} className="relative overflow-hidden rounded-2xl border border-[#E6DAC6] bg-[#FBF7F1] p-4">
+                        <div className="pointer-events-none absolute right-0 top-0 h-16 w-16 rounded-bl-4xl bg-[#F2E7D9]" />
+                        {(() => {
+                          const imageUrl = resolveContributorImageUrl(item.contributor_image_url)
+                          const displayName = formatDisplayName(item.name)
+                          const wallMessage = getSupporterWallMessage(item.note, `${item.id}:${displayName}`)
 
-            <div className="space-y-6 lg:col-span-5">
+                          return (
+                            <>
+                              <div className="relative flex items-center gap-3">
+                                {imageUrl ? (
+                                  <img
+                                    src={imageUrl}
+                                    alt={displayName}
+                                    className="h-12 w-12 rounded-full border border-[#E4D7C5] object-cover"
+                                    referrerPolicy="no-referrer"
+                                    onError={(event) => {
+                                      event.currentTarget.style.display = "none"
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#E4D7C5] bg-white text-sm font-bold text-slate-700">
+                                    {displayName.slice(0, 1).toUpperCase()}
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-semibold text-slate-900">{displayName}</p>
+                                  <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleDateString()}</p>
+                                </div>
+                              </div>
+
+                              <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-rose-700">Verified supporter</p>
+
+                              <p className="mt-2 wrap-break-word text-sm leading-6 text-slate-600">
+                                {wallMessage.slice(0, SUPPORTER_NOTE_DISPLAY_LIMIT)}
+                                {wallMessage.length > SUPPORTER_NOTE_DISPLAY_LIMIT ? "..." : ""}
+                              </p>
+                            </>
+                          )
+                        })()}
+                      </article>
+                    ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
+          </div>
+
+          <div className="space-y-6 lg:col-span-5">
+            <div className="top-24 space-y-6 lg:sticky">
               {paymentSuccess ? (
                 <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-7 text-emerald-900 shadow-sm">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-xl text-white">✓</div>
@@ -289,105 +357,19 @@ export default function DonatePage() {
                   </p>
                 </div>
               </div>
+
+              <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
+                <p className="flex items-center gap-2 text-sm font-semibold">
+                  <ShieldCheck className="h-4 w-4" />
+                  Note
+                </p>
+                <p className="mt-2 text-sm leading-6">
+                  This is a personal initiative and not a registered charitable organization. Contributions are voluntary and used solely for the development and maintenance of the BSPREP platform.
+                </p>
+              </section>
             </div>
           </div>
         </div>
-
-        {/* Supporter Wall */}
-        <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">Verified Supporter Wall</h2>
-              <p className="mt-1 text-sm text-slate-600">Moderated public acknowledgements from verified payments only.</p>
-            </div>
-            <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-              Showing {paginatedSupporters.length} of {sortedSupporters.length}
-            </div>
-          </div>
-
-          {loadingSupporters ? (
-            <p className="mt-4 text-sm text-slate-500">Loading supporters...</p>
-          ) : sortedSupporters.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500">No public contributions yet. Be the first supporter!</p>
-          ) : (
-            <>
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {paginatedSupporters.map((item) => (
-                  <article key={item.id} className="w-full rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                    <div className="flex items-center gap-3">
-                      {(() => {
-                        const imageUrl = resolveContributorImageUrl(item.contributor_image_url)
-                        return imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={item.name}
-                            className="h-12 w-12 rounded-full border border-slate-200 object-cover"
-                            referrerPolicy="no-referrer"
-                            onError={(event) => {
-                              event.currentTarget.style.display = "none"
-                            }}
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-bold text-slate-700">
-                            {item.name.slice(0, 1).toUpperCase()}
-                          </div>
-                        )
-                      })()}
-                      <div>
-                        <p className="font-semibold text-slate-900">{item.name}</p>
-                        <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-rose-700">Verified supporter</p>
-
-                    <p className="mt-2 wrap-break-word text-sm text-slate-600">
-                      {(item.note?.trim() || "No comment").slice(0, SUPPORTER_NOTE_DISPLAY_LIMIT)}
-                      {(item.note?.trim() || "").length > SUPPORTER_NOTE_DISPLAY_LIMIT ? "..." : ""}
-                    </p>
-                  </article>
-                ))}
-              </div>
-              {totalSupporterPages > 1 ? (
-                <div className="mt-6 flex items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSupporterPage((page) => Math.max(0, page - 1))}
-                    disabled={supporterPage === 0}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/15 bg-white text-black transition hover:border-black/30 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Previous supporters"
-                  >
-                    ←
-                  </button>
-                  <span className="text-sm text-slate-600">
-                    {supporterPage + 1} / {totalSupporterPages}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSupporterPage((page) => Math.min(totalSupporterPages - 1, page + 1))}
-                    disabled={supporterPage >= totalSupporterPages - 1}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/15 bg-white text-black transition hover:border-black/30 disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Next supporters"
-                  >
-                    →
-                  </button>
-                </div>
-              ) : null}
-            </>
-          )}
-        </section>
-
-        {/* Disclaimer */}
-        <section className="mt-10 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
-          <p className="flex items-center gap-2 text-sm font-semibold">
-            <ShieldCheck className="h-4 w-4" />
-            Note
-          </p>
-          <p className="mt-2 text-sm leading-6">
-            This is a personal initiative and not a registered charitable organization. Contributions are voluntary and used solely for the development and maintenance of the BSPREP platform.
-          </p>
-          <p className="mt-3 text-sm font-semibold">Thank you for supporting BSPREP.</p>
-        </section>
       </section>
 
       {/* Payment Modal */}

@@ -108,9 +108,9 @@ export function RazorpayButton({ onPaymentSuccess, onPaymentError }: RazorpayBut
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-rose-200 bg-rose-50/60 p-4">
+    <div className="space-y-4 rounded-2xl border border-[#E6DAC6] bg-[#F8F4ED] p-4">
       <div>
-        <label className="mb-1 block text-sm font-semibold text-rose-900">Donation Amount (₹)</label>
+        <label className="mb-1 block text-sm font-semibold text-slate-900">Donation Amount (₹)</label>
         <input
           type="number"
           min={MIN_DONATION_INR}
@@ -119,7 +119,7 @@ export function RazorpayButton({ onPaymentSuccess, onPaymentError }: RazorpayBut
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           disabled={isLoading}
-          className="h-11 w-full rounded-md border border-rose-300 bg-white px-3 text-sm outline-none focus:border-rose-500 disabled:opacity-50"
+          className="h-11 w-full rounded-md border border-[#D8D0C3] bg-white px-3 text-sm outline-none focus:border-rose-400 disabled:opacity-50"
           placeholder="Enter amount in INR"
         />
         <p className="mt-2 text-xs text-rose-700">Minimum ₹{MIN_DONATION_INR}, Maximum ₹{MAX_DONATION_LABEL}</p>
@@ -148,7 +148,7 @@ export function RazorpayButton({ onPaymentSuccess, onPaymentError }: RazorpayBut
           Number(amount) < MIN_DONATION_INR ||
           Number(amount) > MAX_DONATION_INR
         }
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-rose-700 bg-rose-700 px-4 text-sm font-semibold text-white transition hover:bg-rose-800 disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-black bg-black px-4 text-sm font-semibold text-white transition hover:bg-[#111] disabled:opacity-50"
       >
         {isLoading ? (
           <>

@@ -23,7 +23,20 @@ function isVerifiedStatus(status: string): boolean {
 
 function isFinalStatus(status: string): boolean {
   const normalized = status.toLowerCase().trim()
-  return normalized === "verified" || normalized === "reviewed" || normalized === "rejected"
+  return normalized === "verified" || normalized === "reviewed" || normalized === "rejected" || normalized === "deleted"
+}
+
+function formatDisplayName(name: string): string {
+  const compact = name.replace(/\s+/g, " ").trim()
+  if (!compact) return "Supporter"
+
+  return compact
+    .split(" ")
+    .map((part) => {
+      if (part.length <= 2) return part.toUpperCase()
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+    })
+    .join(" ")
 }
 
 function getFriendlyErrorMessage(error: unknown, fallback: string): string {
@@ -109,7 +122,7 @@ export default function AdminDonationsPage() {
     [filtered],
   )
 
-  async function updateDonationStatus(id: string, status: "verified" | "rejected" | "pending") {
+  async function updateDonationStatus(id: string, status: "verified" | "rejected" | "pending" | "deleted") {
     setUpdatingId(id)
     setError("")
     try {
@@ -125,7 +138,12 @@ export default function AdminDonationsPage() {
         return
       }
 
-      setDonations((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)))
+      setDonations((prev) => {
+        if (status === "deleted") {
+          return prev.filter((item) => item.id !== id)
+        }
+        return prev.map((item) => (item.id === id ? { ...item, status } : item))
+      })
     } catch (error) {
       setError(getFriendlyErrorMessage(error, "Failed to update donation status"))
     } finally {
@@ -147,6 +165,8 @@ export default function AdminDonationsPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search name, email, payment ID"
+            suppressHydrationWarning
+            autoComplete="off"
             className="h-full w-full bg-transparent text-slate-200 outline-none placeholder:text-slate-500"
           />
         </label>
@@ -185,16 +205,17 @@ export default function AdminDonationsPage() {
               <article key={item.id} className="grid grid-cols-[2.2fr_1.1fr_1.4fr_0.9fr_0.9fr_1.2fr] items-center gap-4 px-6 py-4">
                 {(() => {
                   const imageUrl = resolveContributorImageUrl(item.contributor_image_url)
+                  const displayName = formatDisplayName(item.name)
                   return (
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="relative h-12 w-12 shrink-0">
                     <div className="absolute inset-0 flex items-center justify-center rounded-full border border-white/15 bg-[#1a1f29] text-sm font-semibold text-slate-300">
-                      {item.name.slice(0, 1).toUpperCase()}
+                      {displayName.slice(0, 1).toUpperCase()}
                     </div>
                     {imageUrl ? (
                       <img
                         src={imageUrl}
-                        alt={item.name}
+                        alt={displayName}
                         className="relative h-12 w-12 rounded-full border border-white/15 object-cover"
                         referrerPolicy="no-referrer"
                         onError={(event) => {
@@ -204,7 +225,7 @@ export default function AdminDonationsPage() {
                     ) : null}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-100">{item.name}</p>
+                    <p className="truncate text-sm font-semibold text-slate-100">{displayName}</p>
                     <p className="truncate text-xs text-slate-500">{item.email}</p>
                     {item.note ? <p className="truncate text-xs text-slate-500">{item.note}</p> : null}
                   </div>
@@ -225,6 +246,8 @@ export default function AdminDonationsPage() {
                       ? "text-emerald-300"
                       : item.status === "rejected"
                         ? "text-rose-300"
+                        : item.status === "deleted"
+                          ? "text-slate-400"
                         : "text-amber-300"
                   }`}
                 >
@@ -251,6 +274,14 @@ export default function AdminDonationsPage() {
                     className="rounded-md border border-rose-500/40 bg-rose-500/10 px-2 py-1 text-[11px] font-semibold text-rose-300 disabled:opacity-50"
                   >
                     Reject
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateDonationStatus(item.id, "deleted")}
+                    disabled={updatingId === item.id}
+                    className="rounded-md border border-slate-500/40 bg-slate-500/10 px-2 py-1 text-[11px] font-semibold text-slate-300 disabled:opacity-50"
+                  >
+                    Delete
                   </button>
                 </div>
               </article>

@@ -2,6 +2,44 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server"
 import { hasAdminRole } from "@/lib/security/admin-role"
 
+type AdminDonationRow = {
+  id: string
+  name: string
+  email: string
+  amount: number
+  razorpay_payment_id: string | null
+  razorpay_order_id: string | null
+  contributor_image_url: string | null
+  show_public: boolean
+  note: string | null
+  status: string | null
+  submitted_at: string
+}
+
+const FAILED_STATUSES = new Set([
+  "failed",
+  "payment_failed",
+  "cancelled",
+  "canceled",
+  "abandoned",
+  "expired",
+])
+
+function shouldHideFromAdminList(row: AdminDonationRow): boolean {
+  const status = (row.status || "").toLowerCase().trim()
+
+  if (FAILED_STATUSES.has(status)) {
+    return true
+  }
+
+  // Hide abandoned Razorpay attempts: order created, but no successful payment id captured.
+  if ((status === "pending" || status === "received") && !row.razorpay_payment_id && !!row.razorpay_order_id) {
+    return true
+  }
+
+  return false
+}
+
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -22,14 +60,16 @@ export async function GET(_request: NextRequest) {
     const service = createServiceRoleClient()
     const { data, error } = await service
       .from("donations")
-      .select("id, name, email, amount, razorpay_payment_id, contributor_image_url, show_public, note, status, submitted_at")
+      .select("id, name, email, amount, razorpay_payment_id, razorpay_order_id, contributor_image_url, show_public, note, status, submitted_at")
       .order("submitted_at", { ascending: false })
 
     if (error) {
       return NextResponse.json({ error: "Failed to fetch donations" }, { status: 500 })
     }
 
-    return NextResponse.json({ donations: data || [] })
+    const donations = (data || []).filter((row) => !shouldHideFromAdminList(row as AdminDonationRow))
+
+    return NextResponse.json({ donations })
   } catch (error) {
     console.error("Admin donations GET error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -67,6 +107,16 @@ export async function PATCH(request: NextRequest) {
 
     const service = createServiceRoleClient()
     let targetStatus = status
+
+    if (status === "deleted") {
+      const { error: deleteError } = await service.from("donations").delete().eq("id", id)
+
+      if (deleteError) {
+        return NextResponse.json({ error: "Failed to delete donation" }, { status: 500 })
+      }
+
+      return NextResponse.json({ success: true, deleted: true, id })
+    }
 
     const buildUpdatePayload = (nextStatus: string): { status: string; show_public?: boolean } => {
       const payload: { status: string; show_public?: boolean } = { status: nextStatus }

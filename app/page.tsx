@@ -407,6 +407,10 @@ export default function HomePage() {
             Get Started
             <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
           </Button>
+
+          <p className="mt-5 text-xs text-black/55">
+            Want to support the initiative? <Link href="/donate" className="font-semibold text-black underline underline-offset-4">Donate to BSPREP</Link>
+          </p>
         </div>
       </section>
 

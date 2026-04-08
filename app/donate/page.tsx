@@ -26,17 +26,6 @@ const DonateRazorpayButton = dynamic(
 )
 
 const SUPPORTER_NOTE_DISPLAY_LIMIT = 180
-const FORCE_GENERATED_WALL_MESSAGES = true
-const WALL_MESSAGE_TEMPLATES = [
-  "This platform makes learning practical and clear. Grateful to support the team building it every day.",
-  "Happy to contribute to a space that keeps quality education accessible and student-focused.",
-  "The structure, clarity, and consistency here are excellent. Wishing the team continued growth.",
-  "Supporting BSPREP because the content is genuinely useful and helps learners move forward with confidence.",
-  "The effort behind this platform shows in every module. Proud to be a small part of its journey.",
-  "Clean explanations, real outcomes, and strong guidance. Glad to support this mission.",
-  "Thank you for creating a reliable learning ecosystem. Looking forward to more resources and tools.",
-  "A meaningful initiative for learners. Happy to contribute and encourage this work.",
-]
 
 type PublicDonation = {
   id: string
@@ -70,35 +59,6 @@ function resolveContributorImageUrl(url: string | null): string | null {
   }
 
   return url
-}
-
-function formatDisplayName(name: string): string {
-  const compact = name.replace(/\s+/g, " ").trim()
-  if (!compact) return "Supporter"
-
-  return compact
-    .split(" ")
-    .map((part) => {
-      if (part.length <= 2) return part.toUpperCase()
-      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
-    })
-    .join(" ")
-}
-
-function getSupporterWallMessage(note: string | null, seed: string): string {
-  const normalizedNote = (note || "").replace(/\s+/g, " ").trim()
-  const hash = Array.from(seed).reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 2147483647, 7)
-  const generated = WALL_MESSAGE_TEMPLATES[hash % WALL_MESSAGE_TEMPLATES.length]
-
-  if (FORCE_GENERATED_WALL_MESSAGES) {
-    return generated
-  }
-
-  if (normalizedNote.length >= 50) {
-    return normalizedNote
-  }
-
-  return generated
 }
 
 export default function DonatePage() {
@@ -258,8 +218,8 @@ export default function DonatePage() {
                         <div className="pointer-events-none absolute right-0 top-0 h-16 w-16 rounded-bl-4xl bg-[#F2E7D9]" />
                         {(() => {
                           const imageUrl = resolveContributorImageUrl(item.contributor_image_url)
-                          const displayName = formatDisplayName(item.name)
-                          const wallMessage = getSupporterWallMessage(item.note, `${item.id}:${displayName}`)
+                          const displayName = (item.name || "").replace(/\s+/g, " ").trim() || "Supporter"
+                          const wallMessage = (item.note || "").replace(/\s+/g, " ").trim() || "No comment"
 
                           return (
                             <>

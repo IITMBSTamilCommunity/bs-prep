@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { Linkedin, Youtube, Github, Globe, X, Instagram, Twitter } from "lucide-react"
+import { Linkedin, Youtube, Github, Globe, X, Instagram, Twitter, HeartHandshake } from "lucide-react"
 
 const developers: {name: string; photo: string; linkedin: string; github: string; instagram: string; twitter: string; portfolio: string; handles: {linkedin: string; github: string; instagram: string; twitter: string; portfolio: string}; about: string}[] = []
 /* DEVELOPERS_DISABLED
@@ -142,6 +142,16 @@ export function Footer() {
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-4">
+                <Link
+                  href="/donate"
+                  className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100"
+                >
+                  <HeartHandshake className="h-3.5 w-3.5" />
+                  Support BSPREP
+                </Link>
+              </div>
             </div>
           </div>
 

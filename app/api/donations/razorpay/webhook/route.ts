@@ -101,8 +101,8 @@ export async function POST(request: NextRequest) {
       }
 
       if (!donations || donations.length === 0) {
-        console.warn(`No donation found for order ${orderId}`)
-        return NextResponse.json({ error: "Donation not found" }, { status: 404 })
+        console.info(`No donation row mapped for order ${orderId}; skipping webhook update.`)
+        return NextResponse.json({ success: true, skipped: true, reason: "donation_not_found" })
       }
 
       const donation = donations[0]

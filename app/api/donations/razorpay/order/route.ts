@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createRazorpayOrder } from "@/lib/razorpay"
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit"
-import { createServiceRoleClient } from "@/lib/supabase/server"
 
 const isDevelopment = process.env.NODE_ENV !== "production"
 const MIN_DONATION_INR = 10
@@ -71,23 +70,6 @@ export async function POST(request: NextRequest) {
         purpose: "BSPREP Donation",
       },
     })
-
-    // Create a pending donation row immediately so admin can track the flow.
-    // Donor details will be updated after successful checkout in /api/donations/complete.
-    try {
-      const service = createServiceRoleClient()
-      await service.from("donations").insert({
-        name: "Pending Donor",
-        email: `pending+${order.id}@bsprep.local`,
-        amount,
-        upi_reference_id: `rzp_order_${order.id}`,
-        razorpay_order_id: order.id,
-        status: "pending",
-        show_public: false,
-      })
-    } catch (insertError) {
-      console.warn("Failed to create pending donation row at order creation:", insertError)
-    }
 
     return NextResponse.json({
       orderId: order.id,

@@ -1,0 +1,431 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BSPrep Python Compiler — CodeMirror 6 edition
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Design tokens ───────────────────────────────────────────────────────── */
+.cc-dark {
+  --cc-toolbar:      #13141f;
+  --cc-toolbar-bd:   #1e2030;
+  --cc-bg:           #1a1b26;
+  --cc-text:         #a9b1d6;
+  --cc-sub:          #565f89;
+  --cc-lang-bg:      #1e2030;
+  --cc-lang-bd:      #292d4a;
+  --cc-lang-c:       #a9b1d6;
+  --cc-icon-hov:     rgba(255,255,255,0.07);
+  --cc-icon-c:       #565f89;
+  --cc-handle:       #1e2030;
+  --cc-grip:         #3b3d60;
+  --cc-grip-hov:     #7480c2;
+  --cc-io-bg:        #13141f;
+  --cc-io-bd:        #1e2030;
+  --cc-stdin-bg:     #0f1117;
+  --cc-stdin-c:      #c0caf5;
+  --cc-stdin-bd:     #1e2030;
+  --cc-stdin-ph:     #3b3d60;
+  --cc-hint-bg:      #0f1117;
+  --cc-hint-c:       #3b3d60;
+  --cc-hint-link:    #58a6ff;
+  --cc-out-label-c:  #a9b1d6;
+  --cc-out-bg:       #13141f;
+  --cc-stdout-c:     #73daca;
+  --cc-stderr-c:     #f7768e;
+  --cc-run:          #1461cc;
+  --cc-run-hov:      #1870e3;
+  --cc-editor-bg:    #1a1b26;
+}
+
+/* Warm beige light theme to match BSPrep site palette */
+.cc-light {
+  --cc-toolbar:      #F5EED8;
+  --cc-toolbar-bd:   #E2D5B8;
+  --cc-bg:           #FAF8F5;
+  --cc-text:         #2d2d2d;
+  --cc-sub:          #7a6f5e;
+  --cc-lang-bg:      #EDE4CE;
+  --cc-lang-bd:      #D4C8A8;
+  --cc-lang-c:       #3d3222;
+  --cc-icon-hov:     rgba(0,0,0,0.06);
+  --cc-icon-c:       #7a6f5e;
+  --cc-handle:       #E2D5B8;
+  --cc-grip:         #C8BA97;
+  --cc-grip-hov:     #8a7a5e;
+  --cc-io-bg:        #F5F0E6;
+  --cc-io-bd:        #E2D5B8;
+  --cc-stdin-bg:     #FBF7EE;
+  --cc-stdin-c:      #2d2d2d;
+  --cc-stdin-bd:     #D8CCAF;
+  --cc-stdin-ph:     #b5a890;
+  --cc-hint-bg:      #F5F0E6;
+  --cc-hint-c:       #a8967a;
+  --cc-hint-link:    #2563eb;
+  --cc-out-label-c:  #3d3222;
+  --cc-out-bg:       #F5F0E6;
+  --cc-stdout-c:     #166534;
+  --cc-stderr-c:     #991b1b;
+  --cc-run:          #1461cc;
+  --cc-run-hov:      #1870e3;
+  --cc-editor-bg:    #FFFDF8;
+}
+
+/* ── Page root ─────────────────────────────────────────────────────────────
+   NOT fixed — allows footer to render below workspace.
+   cc-workspace fills the remaining viewport height after navbar+toolbar.
+   ─────────────────────────────────────────────────────────────────────────*/
+.cc-page {
+  display: flex;
+  flex-direction: column;
+  background: var(--cc-bg);
+  color: var(--cc-text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ── Compiler toolbar ─────────────────────────────────────────────────────── */
+.cc-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--cc-toolbar);
+  border-bottom: 1px solid var(--cc-toolbar-bd);
+  gap: 8px;
+}
+
+.cc-toolbar-left,
+.cc-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cc-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  background: var(--cc-lang-bg);
+  border: 1px solid var(--cc-lang-bd) !important;
+  border-radius: 4px;
+  color: var(--cc-lang-c);
+  font-size: 12.5px;
+  font-weight: 500;
+  user-select: none;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.cc-lang-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: none !important;
+  outline: none !important;
+  background: #3d59a1;
+  flex-shrink: 0;
+}
+
+.cc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.cc-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  outline: none;
+}
+
+.cc-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--cc-icon-c);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.cc-icon-btn:hover { background: var(--cc-icon-hov); color: var(--cc-text); }
+
+.cc-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 13px;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 4px;
+  background: var(--cc-run);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+
+.cc-run-btn:hover:not(:disabled) { background: var(--cc-run-hov); }
+.cc-run-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.cc-spin { animation: cc-spin 0.75s linear infinite; flex-shrink: 0; }
+@keyframes cc-spin { to { transform: rotate(360deg); } }
+
+/* ── Workspace — fixed height so footer sits naturally below ─────────────── */
+.cc-workspace {
+  /* 80px = h-20 navbar, 40px = compiler toolbar */
+  height: calc(100vh - 80px - 40px);
+  overflow: hidden;
+  display: flex;
+}
+
+.cc-panel-group { width: 100%; height: 100%; }
+
+/* ── Editor shell ─────────────────────────────────────────────────────────── */
+.cc-editor-shell {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--cc-editor-bg);
+}
+
+.cc-editor-shell .cm-editor {
+  flex: 1;
+  height: 100%;
+  outline: none !important;
+}
+
+/* Kill conflicting global border/outline on everything inside CodeMirror */
+.cc-editor-shell .cm-editor *,
+.cc-editor-shell .cm-editor *::before,
+.cc-editor-shell .cm-editor *::after {
+  box-shadow: none;
+  outline: none;
+}
+
+/* Restore gutter right border */
+.cc-dark  .cc-editor-shell .cm-gutters { border-right: 1px solid #1e2030 !important; }
+.cc-light .cc-editor-shell .cm-gutters { border-right: 1px solid #D4C8A8 !important; }
+
+/* ── Cursor blink — override all transitions that could interfere ─────────── */
+.cc-editor-shell .cm-cursor,
+.cc-editor-shell .cm-dropCursor {
+  animation: cm-cursor-blink 1.2s step-start infinite !important;
+  transition: none !important;
+}
+
+@keyframes cm-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.cc-editor-shell .cm-scroller { height: 100%; overflow: auto; }
+
+/* ── Resize handle ────────────────────────────────────────────────────────── */
+.cc-resize-handle {
+  flex-shrink: 0;
+  width: 4px;
+  background: var(--cc-handle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: background 0.15s;
+}
+
+.cc-resize-handle:hover,
+.cc-resize-handle[data-resize-handle-state="drag"] { background: #3d59a1; }
+
+.cc-grip { display: flex; flex-direction: column; gap: 3px; }
+
+.cc-grip span {
+  display: block;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  border: none;
+  outline: none;
+  background: var(--cc-grip);
+}
+
+.cc-resize-handle:hover .cc-grip span,
+.cc-resize-handle[data-resize-handle-state="drag"] .cc-grip span {
+  background: var(--cc-grip-hov);
+}
+
+/* ── IO panel ─────────────────────────────────────────────────────────────── */
+.cc-io-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--cc-io-bg);
+  overflow: hidden;
+}
+
+.cc-input-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--cc-io-bd);
+}
+
+.cc-stdin {
+  width: 100%;
+  min-height: 85px;
+  max-height: 150px;
+  resize: vertical;
+  background: var(--cc-stdin-bg);
+  color: var(--cc-stdin-c);
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 10px 14px;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.cc-stdin::placeholder { color: var(--cc-stdin-ph); }
+
+.cc-hint {
+  padding: 7px 14px;
+  font-size: 12px;
+  color: var(--cc-hint-c);
+  background: var(--cc-hint-bg);
+  border-bottom: 1px solid var(--cc-io-bd);
+  flex-shrink: 0;
+}
+
+.cc-hint-link { color: var(--cc-hint-link); }
+
+.cc-output-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.cc-output-label {
+  flex-shrink: 0;
+  padding: 8px 14px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cc-out-label-c);
+  background: var(--cc-io-bg);
+  border-bottom: 1px solid var(--cc-io-bd);
+}
+
+.cc-output-content {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--cc-out-bg);
+}
+
+.cc-io-running {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px;
+  color: var(--cc-sub);
+  font-size: 13px;
+}
+
+.cc-pre {
+  margin: 0;
+  padding: 10px 14px;
+  font-family: 'Fira Code', Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border: none;
+  outline: none;
+}
+
+.cc-stdout { color: var(--cc-stdout-c); }
+.cc-stderr { color: var(--cc-stderr-c); }
+
+/* ── Auth screens ──────────────────────────────────────────────────────────── */
+.cc-auth-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 80px);
+  gap: 16px;
+  background: #0f1117;
+  color: #565f89;
+  font-size: 14px;
+}
+
+.cc-auth-card {
+  background: #13141f;
+  border: 1px solid #1e2030 !important;
+  border-radius: 12px;
+  padding: 32px 40px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.cc-auth-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #1e2030;
+  border: 1px solid #292d4a !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3d59a1;
+}
+
+.cc-auth-title { margin: 0; font-size: 17px; font-weight: 700; color: #a9b1d6; }
+.cc-auth-desc  { margin: 0; font-size: 13px; color: #565f89; line-height: 1.6; }
+
+.cc-auth-dots { display: flex; gap: 6px; margin-top: 6px; }
+
+.cc-auth-dots span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3d59a1;
+  border: none;
+  outline: none;
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+
+.cc-auth-dots span:nth-child(2) { animation-delay: 0.2s; }
+.cc-auth-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-pulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40%           { transform: scale(1.0); opacity: 1.0; }
+}

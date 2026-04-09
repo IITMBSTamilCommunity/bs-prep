@@ -21,11 +21,13 @@ export function getSecurityHeaders() {
   // Content Security Policy
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://checkout.razorpay.com https://cdnjs.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://checkout.razorpay.com https://cdnjs.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://cdn.jsdelivr.net",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com https://checkout.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com https://checkout.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://cdn.jsdelivr.net",
+    "worker-src 'self' blob:",
+    "child-src 'self' blob:",
     "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
     "object-src 'none'",
     "base-uri 'self'",

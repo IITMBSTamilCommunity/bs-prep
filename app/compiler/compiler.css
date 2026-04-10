@@ -1,11 +1,42 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    BSPrep Python Compiler — CodeMirror 6 edition
+   Clean white light theme (default) + dark mode toggle
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Design tokens ───────────────────────────────────────────────────────── */
+/* ── Full-viewport isolation wrapper (set by compiler/layout.tsx) ───────────
+   Overrides the global dotted-grid body background so the compiler
+   fills 100vh with a clean, solid surface.
+   ─────────────────────────────────────────────────────────────────────────*/
+.cc-layout-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #ffffff;       /* solid fallback; cc-page overrides with token */
+  background-image: none !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Kill global Tailwind border-border rule inside the compiler shell */
+.cc-layout-root *,
+.cc-layout-root *::before,
+.cc-layout-root *::after {
+  border-color: inherit;
+}
+
+
+/* ── Design tokens — DARK ─────────────────────────────────────────────────── */
 .cc-dark {
-  --cc-toolbar:      #13141f;
-  --cc-toolbar-bd:   #1e2030;
+  --cc-topbar:       #13141f;
+  --cc-topbar-bd:    #1e2030;
+  --cc-tabs-bg:      #0f1117;
+  --cc-tabs-bd:      #1e2030;
+  --cc-tab-bg:       transparent;
+  --cc-tab-active:   #1a1b26;
+  --cc-tab-text:     #565f89;
+  --cc-tab-text-a:   #c0caf5;
+  --cc-tab-bd-a:     #3d59a1;
   --cc-bg:           #1a1b26;
   --cc-text:         #a9b1d6;
   --cc-sub:          #565f89;
@@ -21,7 +52,6 @@
   --cc-io-bd:        #1e2030;
   --cc-stdin-bg:     #0f1117;
   --cc-stdin-c:      #c0caf5;
-  --cc-stdin-bd:     #1e2030;
   --cc-stdin-ph:     #3b3d60;
   --cc-hint-bg:      #0f1117;
   --cc-hint-c:       #3b3d60;
@@ -33,100 +63,145 @@
   --cc-run:          #1461cc;
   --cc-run-hov:      #1870e3;
   --cc-editor-bg:    #1a1b26;
+  --cc-back-bg:      #1e2030;
+  --cc-back-bd:      #292d4a;
+  --cc-back-c:       #a9b1d6;
+  --cc-back-hov:     #292d4a;
+  --cc-add-file-c:   #565f89;
+  --cc-add-file-hov: rgba(255,255,255,0.07);
 }
 
-/* Warm beige light theme to match BSPrep site palette */
+/* ── Design tokens — LIGHT (clean white like Programiz) ──────────────────── */
 .cc-light {
-  --cc-toolbar:      #F5EED8;
-  --cc-toolbar-bd:   #E2D5B8;
-  --cc-bg:           #FAF8F5;
-  --cc-text:         #2d2d2d;
-  --cc-sub:          #7a6f5e;
-  --cc-lang-bg:      #EDE4CE;
-  --cc-lang-bd:      #D4C8A8;
-  --cc-lang-c:       #3d3222;
+  --cc-topbar:       #ffffff;
+  --cc-topbar-bd:    #e5e7eb;
+  --cc-tabs-bg:      #f9fafb;
+  --cc-tabs-bd:      #e5e7eb;
+  --cc-tab-bg:       transparent;
+  --cc-tab-active:   #ffffff;
+  --cc-tab-text:     #9ca3af;
+  --cc-tab-text-a:   #111827;
+  --cc-tab-bd-a:     #2563eb;
+  --cc-bg:           #f3f4f6;
+  --cc-text:         #111827;
+  --cc-sub:          #6b7280;
+  --cc-lang-bg:      #f3f4f6;
+  --cc-lang-bd:      #d1d5db;
+  --cc-lang-c:       #374151;
   --cc-icon-hov:     rgba(0,0,0,0.06);
-  --cc-icon-c:       #7a6f5e;
-  --cc-handle:       #E2D5B8;
-  --cc-grip:         #C8BA97;
-  --cc-grip-hov:     #8a7a5e;
-  --cc-io-bg:        #F5F0E6;
-  --cc-io-bd:        #E2D5B8;
-  --cc-stdin-bg:     #FBF7EE;
-  --cc-stdin-c:      #2d2d2d;
-  --cc-stdin-bd:     #D8CCAF;
-  --cc-stdin-ph:     #b5a890;
-  --cc-hint-bg:      #F5F0E6;
-  --cc-hint-c:       #a8967a;
+  --cc-icon-c:       #6b7280;
+  --cc-handle:       #e5e7eb;
+  --cc-grip:         #d1d5db;
+  --cc-grip-hov:     #2563eb;
+  --cc-io-bg:        #ffffff;
+  --cc-io-bd:        #e5e7eb;
+  --cc-stdin-bg:     #f9fafb;
+  --cc-stdin-c:      #111827;
+  --cc-stdin-ph:     #9ca3af;
+  --cc-hint-bg:      #f9fafb;
+  --cc-hint-c:       #9ca3af;
   --cc-hint-link:    #2563eb;
-  --cc-out-label-c:  #3d3222;
-  --cc-out-bg:       #F5F0E6;
+  --cc-out-label-c:  #374151;
+  --cc-out-bg:       #ffffff;
   --cc-stdout-c:     #166534;
   --cc-stderr-c:     #991b1b;
-  --cc-run:          #1461cc;
-  --cc-run-hov:      #1870e3;
-  --cc-editor-bg:    #FFFDF8;
+  --cc-run:          #2563eb;
+  --cc-run-hov:      #1d4ed8;
+  --cc-editor-bg:    #ffffff;
+  --cc-back-bg:      #f3f4f6;
+  --cc-back-bd:      #d1d5db;
+  --cc-back-c:       #374151;
+  --cc-back-hov:     #e5e7eb;
+  --cc-add-file-c:   #6b7280;
+  --cc-add-file-hov: rgba(0,0,0,0.06);
 }
 
-/* ── Page root ─────────────────────────────────────────────────────────────
-   NOT fixed — allows footer to render below workspace.
-   cc-workspace fills the remaining viewport height after navbar+toolbar.
+/* ── Page root ──────────────────────────────────────────────────────────────
+   Fills cc-layout-root (fixed, full-viewport).
    ─────────────────────────────────────────────────────────────────────────*/
 .cc-page {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
   background: var(--cc-bg);
   color: var(--cc-text);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* ── Compiler toolbar ─────────────────────────────────────────────────────── */
-.cc-toolbar {
+/* Auth screens need their own 100% height since there is no workspace below */
+.cc-auth-layout-fill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+.cc-topbar {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 40px;
+  height: 44px;
   padding: 0 12px;
-  background: var(--cc-toolbar);
-  border-bottom: 1px solid var(--cc-toolbar-bd);
+  background: var(--cc-topbar);
+  border-bottom: 1px solid var(--cc-topbar-bd);
   gap: 8px;
 }
 
-.cc-toolbar-left,
-.cc-toolbar-right {
+.cc-topbar-left,
+.cc-topbar-right {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 }
 
-.cc-lang-pill {
+/* ── Back to Dashboard button ──────────────────────────────────────────────*/
+.cc-back-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border: 1px solid var(--cc-back-bd) !important;
+  border-radius: 6px;
+  background: var(--cc-back-bg);
+  color: var(--cc-back-c);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+
+.cc-back-btn:hover {
+  background: var(--cc-back-hov);
+}
+
+/* ── Language pill ──────────────────────────────────────────────────────────*/
+.cc-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   height: 26px;
   padding: 0 10px;
   background: var(--cc-lang-bg);
   border: 1px solid var(--cc-lang-bd) !important;
   border-radius: 4px;
   color: var(--cc-lang-c);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
   user-select: none;
   outline: none !important;
   box-shadow: none !important;
 }
 
-.cc-lang-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  border: none !important;
-  outline: none !important;
-  background: #3d59a1;
-  flex-shrink: 0;
-}
-
+/* ── Status badge ───────────────────────────────────────────────────────────*/
 .cc-badge {
   display: inline-flex;
   align-items: center;
@@ -141,18 +216,20 @@
   border-radius: 50%;
   border: none;
   outline: none;
+  flex-shrink: 0;
 }
 
+/* ── Icon buttons ───────────────────────────────────────────────────────────*/
 .cc-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
-  border-radius: 4px;
+  border-radius: 5px;
   background: transparent;
   color: var(--cc-icon-c);
   cursor: pointer;
@@ -161,16 +238,17 @@
 
 .cc-icon-btn:hover { background: var(--cc-icon-hov); color: var(--cc-text); }
 
+/* ── Run button ─────────────────────────────────────────────────────────────*/
 .cc-run-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 26px;
-  padding: 0 13px;
+  height: 28px;
+  padding: 0 14px;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
-  border-radius: 4px;
+  border-radius: 5px;
   background: var(--cc-run);
   color: #fff;
   font-size: 12.5px;
@@ -186,12 +264,136 @@
 .cc-spin { animation: cc-spin 0.75s linear infinite; flex-shrink: 0; }
 @keyframes cc-spin { to { transform: rotate(360deg); } }
 
-/* ── Workspace — fixed height so footer sits naturally below ─────────────── */
+/* ── File tabs bar ──────────────────────────────────────────────────────────*/
+.cc-tabs-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  background: var(--cc-tabs-bg);
+  border-bottom: 1px solid var(--cc-tabs-bd);
+  min-height: 36px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.cc-tabs-bar::-webkit-scrollbar { height: 2px; }
+.cc-tabs-bar::-webkit-scrollbar-track { background: transparent; }
+.cc-tabs-bar::-webkit-scrollbar-thumb { background: var(--cc-tabs-bd); border-radius: 2px; }
+
+.cc-tabs-list {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+}
+
+.cc-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  min-width: 90px;
+  max-width: 160px;
+  cursor: pointer;
+  border-right: 1px solid var(--cc-tabs-bd);
+  background: var(--cc-tab-bg);
+  color: var(--cc-tab-text);
+  font-size: 12.5px;
+  user-select: none;
+  transition: background 0.1s, color 0.1s;
+  position: relative;
+}
+
+.cc-tab:hover:not(.cc-tab-active) {
+  background: var(--cc-icon-hov);
+  color: var(--cc-text);
+}
+
+.cc-tab-active {
+  background: var(--cc-tab-active);
+  color: var(--cc-tab-text-a);
+  font-weight: 500;
+  border-bottom: 2px solid var(--cc-tab-bd-a);
+}
+
+.cc-tab-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-tab-input {
+  flex: 1;
+  background: transparent;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: inherit;
+  font-size: 12.5px;
+  font-family: inherit;
+  padding: 0;
+  min-width: 50px;
+  width: 80px;
+}
+
+.cc-tab-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--cc-icon-c);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.1s, color 0.1s;
+  padding: 0;
+}
+
+.cc-tab-action:hover {
+  background: var(--cc-icon-hov);
+  color: var(--cc-text);
+}
+
+.cc-tab-close:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+/* + New file — inline after last tab (VS Code style) */
+.cc-tab-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  align-self: stretch;
+  flex-shrink: 0;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent;
+  color: var(--cc-add-file-c);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  border-radius: 0;
+}
+
+.cc-tab-add:hover {
+  background: var(--cc-add-file-hov);
+  color: var(--cc-text);
+}
+
+/* ── Workspace ───────────────────────────────────────────────────────────── */
+/* 44px topbar + 36px tabs */
 .cc-workspace {
-  /* 80px = h-20 navbar, 40px = compiler toolbar */
-  height: calc(100vh - 80px - 40px);
+  flex: 1;
   overflow: hidden;
   display: flex;
+  min-height: 0;
 }
 
 .cc-panel-group { width: 100%; height: 100%; }
@@ -222,9 +424,9 @@
 
 /* Restore gutter right border */
 .cc-dark  .cc-editor-shell .cm-gutters { border-right: 1px solid #1e2030 !important; }
-.cc-light .cc-editor-shell .cm-gutters { border-right: 1px solid #D4C8A8 !important; }
+.cc-light .cc-editor-shell .cm-gutters { border-right: 1px solid #e5e7eb !important; }
 
-/* ── Cursor blink — override all transitions that could interfere ─────────── */
+/* Cursor blink */
 .cc-editor-shell .cm-cursor,
 .cc-editor-shell .cm-dropCursor {
   animation: cm-cursor-blink 1.2s step-start infinite !important;
@@ -254,7 +456,7 @@
 }
 
 .cc-resize-handle:hover,
-.cc-resize-handle[data-resize-handle-state="drag"] { background: #3d59a1; }
+.cc-resize-handle[data-resize-handle-state="drag"] { background: var(--cc-run); }
 
 .cc-grip { display: flex; flex-direction: column; gap: 3px; }
 
@@ -369,20 +571,19 @@
 
 /* ── Auth screens ──────────────────────────────────────────────────────────── */
 .cc-auth-screen {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: calc(100vh - 80px);
   gap: 16px;
-  background: #0f1117;
-  color: #565f89;
   font-size: 14px;
+  background: #f9fafb;
+  color: #6b7280;
+  min-height: 0;
 }
 
 .cc-auth-card {
-  background: #13141f;
-  border: 1px solid #1e2030 !important;
   border-radius: 12px;
   padding: 32px 40px;
   max-width: 360px;
@@ -394,20 +595,26 @@
   gap: 12px;
 }
 
+.cc-light-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
 .cc-auth-icon {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: #1e2030;
-  border: 1px solid #292d4a !important;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3d59a1;
+  color: #2563eb;
 }
 
-.cc-auth-title { margin: 0; font-size: 17px; font-weight: 700; color: #a9b1d6; }
-.cc-auth-desc  { margin: 0; font-size: 13px; color: #565f89; line-height: 1.6; }
+.cc-auth-title { margin: 0; font-size: 17px; font-weight: 700; color: #111827; }
+.cc-auth-desc  { margin: 0; font-size: 13px; color: #6b7280; line-height: 1.6; }
 
 .cc-auth-dots { display: flex; gap: 6px; margin-top: 6px; }
 
@@ -416,7 +623,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #3d59a1;
+  background: #2563eb;
   border: none;
   outline: none;
   animation: dot-pulse 1.2s ease-in-out infinite;

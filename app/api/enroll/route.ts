@@ -1,14 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { validateUUID } from '@/lib/security/validation'
-import { enrollmentRateLimiter, writeRateLimiter } from '@/lib/rate-limit'
+import { writeRateLimiter } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const rl = await enrollmentRateLimiter.check(ip)
-  if (!rl.success) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
-  }
   try {
     // Validate request body size
     const text = await request.text()

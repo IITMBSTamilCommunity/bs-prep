@@ -114,7 +114,7 @@ export async function proxy(request: NextRequest) {
         response.headers.set(key, value)
       })
       
-      return addSecurityHeaders(response)
+      return addSecurityHeaders(response, request)
     }
   }
 
@@ -144,7 +144,7 @@ export async function proxy(request: NextRequest) {
   }
   
   // Add security headers to the response
-  const securedResponse = addSecurityHeaders(response)
+  const securedResponse = addSecurityHeaders(response, request)
   
   // Add rate limit headers for API routes
   if (pathname.startsWith('/api/') && currentRateCheck) {

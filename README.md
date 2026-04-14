@@ -1,5 +1,5 @@
 <p align="center" style = "border-radius: 50px;">
-	<img src="https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/logo.jpeg" alt="BSPrep Logo" width="90"/>
+	<img src="https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/image.jpeg" alt="BSPrep Logo" width="90"/>
 </p>
 
 <h1 align="center">BSPrep</h1>

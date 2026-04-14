@@ -1,7 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export function getSecurityHeaders() {
+function isPrivateOrLocalHost(hostname: string): boolean {
+  if (!hostname) return false
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return true
+  if (hostname.startsWith('10.') || hostname.startsWith('192.168.')) return true
+
+  const match = hostname.match(/^172\.(\d{1,3})\./)
+  if (match) {
+    const secondOctet = Number(match[1])
+    return secondOctet >= 16 && secondOctet <= 31
+  }
+
+  return false
+}
+
+export function getSecurityHeaders(request?: NextRequest) {
   const headers = new Headers()
+
+  const hostname = request?.nextUrl.hostname ?? ''
+  const forwardedProto = request?.headers.get('x-forwarded-proto')
+  const protocol = forwardedProto ? `${forwardedProto}:` : request?.nextUrl.protocol
+  const isLocalHost = isPrivateOrLocalHost(hostname)
+  const isProduction = process.env.NODE_ENV === 'production'
+  const isSecureContext = protocol === 'https:'
+  const enforceHttpsUpgrade = isProduction && isSecureContext && !isLocalHost
   
   // Prevent clickjacking
   headers.set('X-Frame-Options', 'DENY')
@@ -33,19 +55,21 @@ export function getSecurityHeaders() {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests"
+    ...(enforceHttpsUpgrade ? ["upgrade-insecure-requests"] : [])
   ].join('; ')
   
   headers.set('Content-Security-Policy', csp)
   
   // HSTS (HTTP Strict Transport Security)
-  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  if (enforceHttpsUpgrade) {
+    headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  }
   
   return headers
 }
 
-export function addSecurityHeaders(response: NextResponse) {
-  const securityHeaders = getSecurityHeaders()
+export function addSecurityHeaders(response: NextResponse, request?: NextRequest) {
+  const securityHeaders = getSecurityHeaders(request)
   
   securityHeaders.forEach((value, key) => {
     response.headers.set(key, value)

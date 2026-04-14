@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Script from "next/script"
 import { useState, Suspense } from "react"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
@@ -70,6 +71,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen text-foreground">
+      <Script src="https://www.noupe.com/embed/019d8d0fbba47ae59158befce960de8af525.js" strategy="afterInteractive" />
       <Navbar isAuthenticated={false} />
 
       <section ref={heroRef.ref} className={`relative overflow-hidden pt-10 md:pt-16 pb-10 md:pb-16 transition-all duration-1000 ${heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>

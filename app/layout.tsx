@@ -75,8 +75,8 @@ export const metadata: Metadata = {
     google: "5ODn-khJLlBmRAPlBkHz4w54nYhejaoLbrkwl_1-_NU",
   },
   icons: {
-    icon: "/new-logo.jpeg",
-    apple: "/new-logo.jpeg",
+    icon: "/new-logo-favicon.png",
+    apple: "/new-logo-favicon.png",
   },
 }
 

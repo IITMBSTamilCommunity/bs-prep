@@ -69,6 +69,11 @@ export async function proxy(request: NextRequest) {
 
   // Apply rate limiting to API routes
   if (pathname.startsWith('/api/')) {
+    if (pathname.startsWith('/api/enroll')) {
+      const response = await updateSession(request)
+      return addSecurityHeaders(response, request)
+    }
+
     const key = getRateLimitKey(request)
     
     // Different rate limits for different endpoints

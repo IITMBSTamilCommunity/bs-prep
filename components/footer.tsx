@@ -77,7 +77,7 @@ export function Footer() {
             {/* Brand */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <img src="https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/new-logo.jpeg" alt="BSPrep Logo" className="w-10 h-10 rounded-full object-cover" />
+                <img src="/new-logo.jpeg" alt="BSPrep Logo" className="w-10 h-10 rounded-full object-cover" />
                 <span className="text-xl font-bold text-black">BSPrep</span>
               </div>
               <p className="text-slate-600 text-sm leading-relaxed">Learn. Grow. Excel. Together.</p>

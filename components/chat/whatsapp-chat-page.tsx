@@ -643,13 +643,13 @@ export function WhatsAppChatPage({
       {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
 
       <section
-        className={`h-[calc(100vh-13.25rem)] overflow-hidden rounded-2xl border shadow-sm ${
+        className={`h-[calc(100dvh-13.25rem)] min-h-0 overflow-hidden rounded-2xl border shadow-sm ${
           isDarkChat ? "border-slate-700 bg-slate-900" : "border-[#d9e0e6] bg-[#f6f8fa]"
         }`}
       >
-        <div className="grid h-full lg:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="grid h-full min-h-0 lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside
-            className={`${selectedConversationId ? "hidden lg:flex" : "flex"} h-full flex-col border-r ${
+            className={`${selectedConversationId ? "hidden lg:flex" : "flex"} h-full min-h-0 flex-col overflow-hidden border-r ${
               isDarkChat ? "border-slate-700 bg-slate-900" : "border-[#d9e0e6] bg-[#ffffff]"
             }`}
           >
@@ -679,7 +679,7 @@ export function WhatsAppChatPage({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
               {listLoading ? (
                 <div className={`flex h-full items-center justify-center gap-2 text-sm ${isDarkChat ? "text-slate-300" : "text-slate-500"}`}>
                   <Loader2 className="h-4 w-4 animate-spin" /> Loading chats...
@@ -748,7 +748,7 @@ export function WhatsAppChatPage({
             </div>
           </aside>
 
-          <div className={`${selectedConversationId ? "flex" : "hidden lg:flex"} h-full flex-col ${isDarkChat ? "bg-slate-950" : "bg-[#efeae2]"}`}>
+          <div className={`${selectedConversationId ? "flex" : "hidden lg:flex"} h-full min-h-0 flex-col overflow-hidden ${isDarkChat ? "bg-slate-950" : "bg-[#efeae2]"}`}>
             {!selectedConversation ? (
               <div className={`flex h-full flex-col items-center justify-center gap-3 px-8 text-center ${isDarkChat ? "text-slate-300" : "text-slate-500"}`}>
                 <MessageCircle className={`h-12 w-12 ${isDarkChat ? "text-slate-400" : "text-slate-400"}`} />
@@ -781,7 +781,7 @@ export function WhatsAppChatPage({
                 </div>
 
                 <div
-                  className="flex-1 overflow-y-auto px-4 py-4"
+                  className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4"
                   style={{
                     backgroundImage: isDarkChat
                       ? "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0)"
@@ -802,8 +802,8 @@ export function WhatsAppChatPage({
                         const canOpenDirectFromName =
                           !isMine &&
                           threadMeta?.kind === "group" &&
-                          ((inbox?.viewer_role === "mentor" && message.sender_role === "student") ||
-                            (inbox?.viewer_role === "student" && message.sender_role === "mentor"))
+                          inbox?.viewer_role !== "admin" &&
+                          message.sender_role !== "admin"
 
                         return (
                           <div key={message.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>

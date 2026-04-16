@@ -197,15 +197,7 @@ export async function GET() {
 
     let directChats: DirectChatRow[] = []
 
-    if (isMentor) {
-      const { data: chatRows } = await service
-        .from("mentor_direct_chats")
-        .select("id, mentor_id, student_id, course_id, updated_at, created_at")
-        .eq("mentor_id", user.id)
-        .order("updated_at", { ascending: false })
-
-      directChats = (chatRows ?? []) as DirectChatRow[]
-    } else if (subjectCourseIds.length > 0) {
+    if (!isMentor && subjectCourseIds.length > 0) {
       const [{ data: mentorsBySingle }, { data: mentorsByArray }] = await Promise.all([
         service
           .from("profiles")
@@ -241,16 +233,15 @@ export async function GET() {
       if (upserts.length > 0) {
         await service.from("mentor_direct_chats").upsert(upserts, { onConflict: "mentor_id,student_id,course_id" })
       }
-
-      const { data: chatRows } = await service
-        .from("mentor_direct_chats")
-        .select("id, mentor_id, student_id, course_id, updated_at, created_at")
-        .eq("student_id", user.id)
-        .in("course_id", subjectCourseIds)
-        .order("updated_at", { ascending: false })
-
-      directChats = (chatRows ?? []) as DirectChatRow[]
     }
+
+    const { data: chatRows } = await service
+      .from("mentor_direct_chats")
+      .select("id, mentor_id, student_id, course_id, updated_at, created_at")
+      .or(`mentor_id.eq.${user.id},student_id.eq.${user.id}`)
+      .order("updated_at", { ascending: false })
+
+    directChats = (chatRows ?? []) as DirectChatRow[]
 
     const directChatIds = directChats.map((chat) => chat.id)
 
@@ -328,25 +319,27 @@ export async function GET() {
       const latestMessage = latestDirectMessageByChatId.get(chat.id)
       const partnerId = chat.student_id === user.id ? chat.mentor_id : chat.student_id
       const partner = profileById.get(partnerId)
+      const partnerRoleRaw = String(partner?.role ?? "member").toLowerCase()
+      const partnerRoleLabel =
+        partnerRoleRaw === "mentor"
+          ? "Mentor"
+          : partnerRoleRaw === "student"
+            ? "Student"
+            : partnerRoleRaw === "admin"
+              ? "Admin"
+              : "Member"
+      const partnerFallback = partnerRoleLabel === "Member" ? "Participant" : partnerRoleLabel
 
       return {
         id: `direct:${chat.id}`,
         kind: "direct" as const,
         chat_id: chat.id,
         course_id: chat.course_id,
-        title: resolveDisplayName(
-          partner,
-          authDisplayNames.get(partnerId),
-          chat.student_id === user.id ? "Mentor" : "Student",
-        ),
-        subtitle: `${SUBJECT_CHAT_LABEL_BY_ID[chat.course_id] ?? chat.course_id} • ${chat.student_id === user.id ? "Mentor" : "Student"}`,
+        title: resolveDisplayName(partner, authDisplayNames.get(partnerId), partnerFallback),
+        subtitle: `${SUBJECT_CHAT_LABEL_BY_ID[chat.course_id] ?? chat.course_id} • ${partnerRoleLabel}`,
         partner: {
           id: partnerId,
-          name: resolveDisplayName(
-            partner,
-            authDisplayNames.get(partnerId),
-            chat.student_id === user.id ? "Mentor" : "Student",
-          ),
+          name: resolveDisplayName(partner, authDisplayNames.get(partnerId), partnerFallback),
           avatar_url: partner?.avatar_url ?? null,
           role: partner?.role ?? null,
           email: partner?.email ?? null,

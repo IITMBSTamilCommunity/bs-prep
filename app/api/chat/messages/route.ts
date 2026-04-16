@@ -298,17 +298,23 @@ export async function GET(request: NextRequest) {
 
     const partnerId = chatRow.student_id === user.id ? chatRow.mentor_id : chatRow.student_id
     const partner = profileById.get(partnerId)
+    const partnerRoleRaw = String(partner?.role ?? "member").toLowerCase()
+    const partnerRoleLabel =
+      partnerRoleRaw === "mentor"
+        ? "Mentor"
+        : partnerRoleRaw === "student"
+          ? "Student"
+          : partnerRoleRaw === "admin"
+            ? "Admin"
+            : "Member"
+    const partnerFallback = partnerRoleLabel === "Member" ? "Participant" : partnerRoleLabel
 
     return NextResponse.json({
       conversation: {
         id: `direct:${chatRow.id}`,
         kind: "direct",
-        title: resolveDisplayName(
-          partner,
-          authDisplayNames.get(partnerId),
-          chatRow.student_id === user.id ? "Mentor" : "Student",
-        ),
-        subtitle: `${SUBJECT_CHAT_LABEL_BY_ID[chatRow.course_id] ?? chatRow.course_id} • ${chatRow.student_id === user.id ? "Mentor" : "Student"}`,
+        title: resolveDisplayName(partner, authDisplayNames.get(partnerId), partnerFallback),
+        subtitle: `${SUBJECT_CHAT_LABEL_BY_ID[chatRow.course_id] ?? chatRow.course_id} • ${partnerRoleLabel}`,
         course_id: chatRow.course_id,
         partner: {
           id: partnerId,

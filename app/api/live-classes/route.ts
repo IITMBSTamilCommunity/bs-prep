@@ -62,15 +62,21 @@ export async function GET(request: NextRequest) {
       }))
       .filter((cls: { course: string; topic: string }) => cls.course && cls.topic) // Filter out empty rows
       .filter((cls: { course: string }) => {
-        // Only show classes for courses the user is enrolled in
-        // Match course IDs like: ct -> qualifier-computational-thinking, stats-1 -> qualifier-stats-1, math-1 -> qualifier-math-1
+        // Keep Python classes visible for everyone in dashboard.
+        const code = cls.course.toLowerCase();
+        if (code === 'python') {
+          return true;
+        }
+
+        // Match sheet code -> course ID for enrollment filtering.
         const courseIdMap: { [key: string]: string } = {
           'ct': 'qualifier-computational-thinking',
           'stats-1': 'qualifier-stats-1',
-          'math-1': 'qualifier-math-1'
+          'math-1': 'qualifier-math-1',
+          'python': 'foundation-programming-python'
         };
-        const courseId = courseIdMap[cls.course.toLowerCase()];
-        return courseId && enrolledCourseIds.includes(courseId);
+        const courseId = courseIdMap[code];
+        return courseId ? enrolledCourseIds.includes(courseId) : false;
       });
 
     return NextResponse.json({ classes });

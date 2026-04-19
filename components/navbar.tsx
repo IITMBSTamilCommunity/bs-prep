@@ -428,6 +428,7 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                             'ct': 'Computational Thinking',
                             'math-1': 'Mathematics I',
                             'stats-1': 'Statistics I',
+                            'python': 'Programming in Python',
                             'math-2': 'Mathematics II',
                             'stats-2': 'Statistics II',
                           }

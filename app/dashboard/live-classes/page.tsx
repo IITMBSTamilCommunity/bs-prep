@@ -28,6 +28,7 @@ const COURSE_LABELS: Record<string, string> = {
   "ct": "Computational Thinking",
   "math-1": "Mathematics I",
   "stats-1": "Statistics I",
+  "python": "Programming in Python",
   "math-2": "Mathematics II",
   "stats-2": "Statistics II",
   "english-1": "English I",

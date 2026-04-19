@@ -148,6 +148,11 @@ export default function StudentDashboard() {
     )
   }
 
+  const hasNoEnrollments = enrolledCourses.length === 0
+  const dashboardLiveClasses = hasNoEnrollments
+    ? liveClasses.filter((cls) => cls.course?.toLowerCase() === "python")
+    : liveClasses
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
@@ -203,6 +208,82 @@ export default function StudentDashboard() {
         </a>
       </div>
 
+      {/* Upcoming Live Classes */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-black">
+            {hasNoEnrollments ? "Python Live Classes" : "Upcoming Live Classes"}
+          </h2>
+          <Link href="/dashboard/live-classes">
+            <Button size="sm" className="bg-black text-white hover:bg-black/80 text-sm font-semibold">
+              Check All Live Classes
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {dashboardLiveClasses.length === 0 ? (
+            <div className="col-span-full bg-white border border-gray-200 rounded-lg p-8 text-center">
+              <p className="text-gray-600">
+                {hasNoEnrollments
+                  ? "No Python live classes scheduled at the moment."
+                  : "No live classes scheduled at the moment."}
+              </p>
+            </div>
+          ) : (
+            dashboardLiveClasses.slice(0, 3).map((liveClass, index) => (
+            <Card key={index} className="bg-white border border-gray-200 hover:border-black transition-all duration-200 hover:shadow-lg rounded-xl overflow-hidden">
+              <CardContent className="p-0">
+                {/* Card Header */}
+                <div className="px-5 pt-5 pb-3 border-b border-gray-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border border-red-200 text-xs font-semibold px-2 py-0.5">
+                      <Video className="w-3 h-3 mr-1" />
+                      Live
+                    </Badge>
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                  </div>
+                  {/* Course Title */}
+                  <div className="mb-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Course</p>
+                    <h3 className="font-bold text-black text-base leading-snug line-clamp-2">
+                      {getCourseDisplayName(liveClass.course)}
+                    </h3>
+                  </div>
+                  {/* Topic */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Topic</p>
+                    <p className="font-bold text-gray-700 leading-snug line-clamp-2 font-medium">
+                      {liveClass.topic}
+                    </p>
+                  </div>
+                </div>
+                {/* Card Footer */}
+                <div className="px-5 py-3">
+                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                      <span className="font-medium">{new Date(liveClass.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-gray-500" />
+                      <span className="font-medium">{formatTime12hr(liveClass.time)}</span>
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full bg-black hover:bg-black/80 text-white font-semibold text-sm"
+                    onClick={() => window.open(liveClass.meetingLink, "_blank")}
+                  >
+                    <Video className="w-4 h-4 mr-2" />
+                    Join Meeting
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )))}
+        </div>
+      </div>
+
       {enrolledCourses.length === 0 ? (
         /* Not enrolled — show explore prompt only */
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-white border border-gray-200 rounded-2xl text-center">
@@ -222,76 +303,6 @@ export default function StudentDashboard() {
         </div>
       ) : (
         <>
-          {/* Upcoming Live Classes */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-black">Upcoming Live Classes</h2>
-              <Link href="/dashboard/live-classes">
-                <Button size="sm" className="bg-black text-white hover:bg-black/80 text-sm font-semibold">
-                  Check All Live Classes
-                </Button>
-              </Link>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {liveClasses.length === 0 ? (
-                <div className="col-span-full bg-white border border-gray-200 rounded-lg p-8 text-center">
-                  <p className="text-gray-600">No live classes scheduled at the moment.</p>
-                </div>
-              ) : (
-                liveClasses.slice(0, 3).map((liveClass, index) => (
-                <Card key={index} className="bg-white border border-gray-200 hover:border-black transition-all duration-200 hover:shadow-lg rounded-xl overflow-hidden">
-                  <CardContent className="p-0">
-                    {/* Card Header */}
-                    <div className="px-5 pt-5 pb-3 border-b border-gray-100">
-                      <div className="flex items-center justify-between mb-3">
-                        <Badge className="bg-red-500/10 text-red-600 hover:bg-red-500/10 border border-red-200 text-xs font-semibold px-2 py-0.5">
-                          <Video className="w-3 h-3 mr-1" />
-                          Live
-                        </Badge>
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                      </div>
-                      {/* Course Title */}
-                      <div className="mb-3">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Course</p>
-                        <h3 className="font-bold text-black text-base leading-snug line-clamp-2">
-                          {getCourseDisplayName(liveClass.course)}
-                        </h3>
-                      </div>
-                      {/* Topic */}
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Topic</p>
-                        <p className="font-bold text-gray-700 leading-snug line-clamp-2 font-medium">
-                          {liveClass.topic}
-                        </p>
-                      </div>
-                    </div>
-                    {/* Card Footer */}
-                    <div className="px-5 py-3">
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                          <span className="font-medium">{new Date(liveClass.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-gray-500" />
-                          <span className="font-medium">{formatTime12hr(liveClass.time)}</span>
-                        </div>
-                      </div>
-                      <Button
-                        className="w-full bg-black hover:bg-black/80 text-white font-semibold text-sm"
-                        onClick={() => window.open(liveClass.meetingLink, "_blank")}
-                      >
-                        <Video className="w-4 h-4 mr-2" />
-                        Join Meeting
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )))}
-            </div>
-          </div>
-
           {/* My Courses */}
           <div>
             <div className="flex items-center justify-between mb-6">

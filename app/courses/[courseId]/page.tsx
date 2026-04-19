@@ -170,7 +170,8 @@ export default function CoursePage() {
         const courseMap: { [key: string]: string } = {
           'qualifier-computational-thinking': 'ct',
           'qualifier-stats-1': 'stats-1',
-          'qualifier-math-1': 'math-1'
+          'qualifier-math-1': 'math-1',
+          'foundation-programming-python': 'python'
         }
         const courseCode = courseMap[courseId]
         const filteredClasses = (data.classes || []).filter(

@@ -9,6 +9,7 @@ const COURSE_DISPLAY_NAMES: Record<string, string> = {
   ct: "Computational Thinking",
   "math-1": "Mathematics for Data Science I",
   "stats-1": "Statistics I",
+  "python": "Programming in Python",
   "math-2": "Mathematics for Data Science II",
   "stats-2": "Statistics II",
   "english-1": "English I",

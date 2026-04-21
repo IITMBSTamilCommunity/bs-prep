@@ -42,8 +42,10 @@ const courseData: Record<string, any> = {
   "qualifier-english-1": {
     title: "English I",
     videos: [
-      { week: 1, title: "Week 1 - Communication Basics", description: "Fundamentals of effective communication", duration: "62:52", youtubeId: "YLRCCeQR95o" },
-      { week: 4, title: "Week 4 - Advanced Skills", description: "Professional communication techniques", duration: "55:30", youtubeId: "9SLWfl6icMU" }
+      { week: 1, title: "Week 1 - Sounds and Words", description: "Vowel and consonant sounds", duration: "62:52", youtubeId: "YLRCCeQR95o" },
+      { week: 2, title: "Week 2 - Parts of Speech", description: "Nouns, pronouns, verbs, adjectives and adverbs", duration: "58:10", youtubeId: "YLRCCeQR95o" },
+      { week: 3, title: "Week 3 - Sentences", description: "Phrases and idioms", duration: "54:18", youtubeId: "9SLWfl6icMU" },
+      { week: 4, title: "Week 4 - Speaking Skills", description: "Spoken English preliminaries", duration: "55:30", youtubeId: "9SLWfl6icMU" }
     ]
   },
   "foundation-math-2": {

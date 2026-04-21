@@ -4,6 +4,12 @@ import { verifyUserFromToken } from "@/lib/supabase/server";
 import { validateCourseId, validateAmount, validatePaymentForm } from "@/lib/validation";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
+const GATEWAY_FEE_PERCENT = 2.5;
+
+function withGatewayFee(baseAmountPaise: number): number {
+  return Math.round(baseAmountPaise * (1 + GATEWAY_FEE_PERCENT / 100));
+}
+
 function getRazorpayClient() {
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -18,14 +24,15 @@ function getRazorpayClient() {
   });
 }
 
-// Course pricing (amount in paise)
-const coursePricing: Record<string, number> = {
-  "qualifier-math-1": 9900, // ₹99
-  "qualifier-stats-1": 9900,
-  "qualifier-computational-thinking": 9900,
+// Base prices (without gateway fee), amount in paise
+const courseBasePricing: Record<string, number> = {
+  "qualifier-math-1": 12900, // ₹129
+  "qualifier-stats-1": 12900,
+  "qualifier-computational-thinking": 12900,
+  "qualifier-english-1": 12900,
 };
 
-const BUNDLE_PRICE = 24900; // ₹249 in paise
+const BUNDLE_BASE_PRICE = 49900; // ₹499 in paise
 
 function buildReceipt(userId: string): string {
   // Razorpay receipt max length is 40 chars.
@@ -86,16 +93,16 @@ export async function POST(request: NextRequest) {
     let description: string;
 
     if (isBundle) {
-      amount = BUNDLE_PRICE;
-      description = "Qualifier Bundle — All 3 Courses";
+      amount = withGatewayFee(BUNDLE_BASE_PRICE);
+      description = "Qualifier Bundle — All 4 Courses";
     } else {
-      if (!(courseId in coursePricing)) {
+      if (!(courseId in courseBasePricing)) {
         return NextResponse.json(
           { error: "Invalid course" },
           { status: 400 }
         );
       }
-      amount = courseId in coursePricing ? coursePricing[courseId] : 0;
+      amount = courseId in courseBasePricing ? withGatewayFee(courseBasePricing[courseId]) : 0;
       description = `Course Enrollment - ${courseId}`;
     }
 
@@ -111,6 +118,9 @@ export async function POST(request: NextRequest) {
       notes: {
         userId,
         courseId,
+        baseAmountPaise: String(isBundle ? BUNDLE_BASE_PRICE : courseBasePricing[courseId]),
+        gatewayFeePercent: String(GATEWAY_FEE_PERCENT),
+        chargeDescription: description,
         payerName: payer.name,
         payerEmail: payer.email,
         payerPhone: payer.phone,

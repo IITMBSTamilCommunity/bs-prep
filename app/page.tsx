@@ -74,37 +74,42 @@ export default function HomePage() {
       <Script src="https://www.noupe.com/embed/019d8d0fbba47ae59158befce960de8af525.js" strategy="afterInteractive" />
       <Navbar isAuthenticated={false} />
 
-      <section ref={heroRef.ref} className={`relative overflow-hidden pt-10 md:pt-16 pb-10 md:pb-16 transition-all duration-1000 ${heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+      <section ref={heroRef.ref} className={`relative overflow-hidden pt-6 sm:pt-10 md:pt-16 pb-8 sm:pb-10 md:pb-16 transition-all duration-1000 ${heroRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Two Column Layout */}
-          <div className="grid md:grid-cols-2 gap-8 items-center mb-8">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center mb-8">
             {/* Left Column: Content */}
-            <div className="space-y-6">
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-                <span className="block mb-3 bg-gradient-to-r from-black to-black/80 bg-clip-text text-transparent">Learn IITM BS</span>
+            <div className="space-y-5 sm:space-y-6">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] sm:leading-tight">
+                <span className="block mb-2 sm:mb-3 bg-gradient-to-r from-black to-black/80 bg-clip-text text-transparent">Learn IITM BS</span>
                 <span className="block bg-gradient-to-r from-black to-black/80 bg-clip-text text-transparent">
                   With Mentors by Your Side
                 </span>
               </h1>
 
-              <p className="text-lg md:text-xl text-black/70 leading-relaxed">
+              <p className="max-w-xl text-base sm:text-lg md:text-xl text-black/70 leading-relaxed">
                 Expert-led learning in Tamil, community support, and peer mentorship for IITM BS students. Master concepts, solve
                 doubts, and ace your exams with our comprehensive platform.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-1 sm:pt-2">
                 <Button
                   onClick={() => setShowLogin(true)}
-                  className="bg-white text-black px-8 py-6 text-lg rounded-full border-2 border-gray-300 hover:border-black transition-all duration-300 font-medium"
+                  className="w-full sm:w-auto bg-white text-black px-6 sm:px-8 py-3 sm:py-6 min-h-12 text-base sm:text-lg rounded-2xl sm:rounded-full border-2 border-gray-300 hover:border-black transition-all duration-300 font-medium"
                 >
                   Sign In
                 </Button>
-                <Link href="https://docs.google.com/forms/d/e/1FAIpQLSfyhCw9tPgKmMWYPhjV6Kzixp2RdYEi-x7JPL6JUxoLwbnB_g/viewform?usp=sharing&ouid=109000575421815991569" target="_blank" rel="noopener noreferrer">
-                  <Button className="group bg-black text-white hover:bg-black/90 px-8 py-6 text-lg rounded-full transition-all duration-300 shadow-md hover:shadow-lg font-medium">
-                    Join Community
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
+                <Button
+                  asChild
+                  className="group w-full sm:w-auto bg-black text-white hover:bg-black/90 px-6 sm:px-8 py-3 sm:py-6 min-h-12 text-base sm:text-lg rounded-2xl sm:rounded-full transition-all duration-300 shadow-md hover:shadow-lg font-medium justify-between sm:justify-center"
+                >
+                  <Link href="https://docs.google.com/forms/d/e/1FAIpQLSfyhCw9tPgKmMWYPhjV6Kzixp2RdYEi-x7JPL6JUxoLwbnB_g/viewform?usp=sharing&ouid=109000575421815991569" target="_blank" rel="noopener noreferrer">
+                    <span>Join Community</span>
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15 sm:bg-transparent">
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </Link>
+                </Button>
               </div>
             </div>
 
@@ -160,7 +165,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div ref={statsRef.ref} className={`grid grid-cols-3 gap-4 md:gap-8 mt-8 transition-all duration-1000 delay-300 ${statsRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div ref={statsRef.ref} className={`grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-8 mt-8 transition-all duration-1000 delay-300 ${statsRef.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             {[
               { label: "Active Students", value: 100, suffix: "+" },
               { label: "Expert Mentors", value: 15, suffix: "+" },
@@ -168,7 +173,7 @@ export default function HomePage() {
             ].map((stat, i) => (
               <div
                 key={i}
-                className="bg-white backdrop-blur-sm rounded-2xl p-6 md:p-8 text-center hover:shadow-lg transition-all duration-300 cursor-default border border-gray-200"
+                className="bg-white backdrop-blur-sm rounded-2xl p-4 sm:p-6 md:p-8 text-center hover:shadow-lg transition-all duration-300 cursor-default border border-gray-200"
               >
                 <p className="text-2xl md:text-3xl font-bold text-black">
                   <AnimatedCounter end={stat.value} suffix={stat.suffix} duration={2500} />
@@ -231,50 +236,57 @@ export default function HomePage() {
             <p className="text-black/70 text-lg mb-2">Master IITM BS Qualifier level with comprehensive Tamil video courses</p>
             <div className="inline-flex items-stretch mt-6 rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
               {/* Per course */}
-              <div className="flex flex-col items-center justify-center px-8 py-4 gap-0.5">
+              <div className="flex flex-col items-center justify-center px-6 py-4 gap-0.5">
                 <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-1">Per Course</span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm text-black/35 line-through">₹499</span>
-                  <span className="text-3xl font-extrabold text-black leading-none">₹99</span>
+                  <span className="text-sm text-black/35 line-through">₹149</span>
+                  <span className="text-3xl font-extrabold text-black leading-none">₹129</span>
                 </div>
-                <span className="mt-1 text-[11px] bg-black text-white rounded-full px-2.5 py-0.5 font-semibold tracking-wide">80% OFF</span>
+                <span className="mt-1 text-[11px] bg-black text-white rounded-full px-2.5 py-0.5 font-semibold tracking-wide">Special Price</span>
               </div>
               {/* Divider */}
               <div className="w-px bg-gray-200 my-3" />
               {/* Bundle */}
-              <div className="flex flex-col items-center justify-center px-8 py-4 gap-0.5">
-                <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-1">All 3 Courses</span>
+              <div className="flex flex-col items-center justify-center px-6 py-4 gap-0.5">
+                <span className="text-xs font-medium text-black/40 uppercase tracking-widest mb-1">All 4 Courses</span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm text-[#51b206]/50 line-through">₹1497</span>
-                  <span className="text-3xl font-extrabold text-[#51b206] leading-none">₹249</span>
+                  <span className="text-sm text-[#51b206]/50 line-through">₹599</span>
+                  <span className="text-3xl font-extrabold text-[#51b206] leading-none">₹499</span>
                 </div>
                 <span className="mt-1 text-[11px] bg-[#51b206] text-white rounded-full px-2.5 py-0.5 font-semibold tracking-wide">Best Value</span>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
             {[
               {
                 id: "qualifier-math-1",
                 title: "Mathematics for Data Science I",
                 description: "Master fundamental math concepts",
                 thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/math.png",
-                price: 99, originalPrice: 499
+                price: 129, originalPrice: 149
               },
               {
                 id: "qualifier-stats-1",
                 title: "Statistics for Data Science I",
                 description: "Learn statistical thinking & analysis",
                 thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/stats.png",
-                price: 99, originalPrice: 499
+                price: 129, originalPrice: 149
               },
               {
                 id: "qualifier-computational-thinking",
                 title: "Computational Thinking",
                 description: "Build problem-solving skills",
                 thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/ct.png",
-                price: 99, originalPrice: 499
+                price: 129, originalPrice: 149
+              },
+              {
+                id: "qualifier-english-1",
+                title: "English I",
+                description: "Build core English communication skills",
+                thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/english.png",
+                price: 129, originalPrice: 149
               }
             ].map((course) => (
               <Link key={course.id} href={`/courses/${course.id}`} className="group">
@@ -286,23 +298,23 @@ export default function HomePage() {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <CardContent className="p-5">
-                    <div className="mb-2">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="mb-1">
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">IITM BS</span>
                     </div>
-                    <h3 className="text-lg font-bold text-black mb-2 line-clamp-2">
+                    <h3 className="text-sm sm:text-base font-bold text-black mb-1.5 line-clamp-2 leading-tight">
                       {course.title}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
                       {course.description}
                     </p>
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                      <span className="text-sm font-medium text-gray-600">Price</span>
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                      <span className="text-xs sm:text-sm font-medium text-gray-600">Price</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
                         {course.originalPrice && (
-                          <span className="text-sm text-gray-400 line-through">₹{course.originalPrice}</span>
+                          <span className="text-xs sm:text-sm text-gray-400 line-through">₹{course.originalPrice}</span>
                         )}
-                        <span className="text-xl font-bold text-black">₹{course.price}</span>
+                        <span className="text-base sm:text-xl font-bold text-black">₹{course.price}</span>
                       </div>
                     </div>
                   </CardContent>

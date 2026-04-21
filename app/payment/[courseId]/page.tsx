@@ -27,7 +27,8 @@ const coursePaymentData: Record<string, any> = {
   "qualifier-math-1": {
     title: "Mathematics for Data Science I",
     level: "qualifier",
-    price: 99,
+    price: 129,
+    originalPrice: 149,
     description: "Fundamental mathematics concepts for data science",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/math.png",
     weeks: 4,
@@ -35,7 +36,8 @@ const coursePaymentData: Record<string, any> = {
   "qualifier-stats-1": {
     title: "Statistics for Data Science I",
     level: "qualifier",
-    price: 99,
+    price: 129,
+    originalPrice: 149,
     description: "Introduction to statistical thinking and analysis",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/stats.png",
     weeks: 4,
@@ -43,9 +45,19 @@ const coursePaymentData: Record<string, any> = {
   "qualifier-computational-thinking": {
     title: "Computational Thinking",
     level: "qualifier",
-    price: 99,
+    price: 129,
+    originalPrice: 149,
     description: "Problem-solving and algorithmic thinking fundamentals",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/ct.png",
+    weeks: 4,
+  },
+  "qualifier-english-1": {
+    title: "English I",
+    level: "qualifier",
+    price: 129,
+    originalPrice: 149,
+    description: "Build core English communication skills for IITM BS.",
+    thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/english.png",
     weeks: 4,
   },
 }
@@ -69,6 +81,8 @@ export default function PaymentPage() {
   })
 
   const showPopup = (title: string, message: string) => setPopup({ title, message })
+  const gatewayFeePercent = 2.5
+  const payableAmount = course ? Number((course.price * (1 + gatewayFeePercent / 100)).toFixed(2)) : 0
 
   useEffect(() => {
     checkAuth()
@@ -297,9 +311,23 @@ export default function PaymentPage() {
 
                 {/* Price */}
                 <div className="border-t border-gray-200 pt-4">
+                  {course.originalPrice && (
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium text-gray-500">Original Price</span>
+                      <span className="text-base text-gray-400 line-through">₹{course.originalPrice}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold text-gray-700">Total Amount</span>
-                    <span className="text-3xl font-bold text-black">₹{course.price}</span>
+                    <span className="text-lg font-semibold text-gray-700">Course Price</span>
+                    <span className="text-2xl font-bold text-black">₹{course.price}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-sm font-medium text-gray-500">Gateway Fee ({gatewayFeePercent}%)</span>
+                    <span className="text-sm font-semibold text-gray-700">₹{(payableAmount - course.price).toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
+                    <span className="text-lg font-semibold text-gray-700">Amount to Pay</span>
+                    <span className="text-3xl font-bold text-black">₹{payableAmount.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -372,7 +400,7 @@ export default function PaymentPage() {
                   className="w-full bg-black hover:bg-black/80 text-white py-6 text-lg font-semibold"
                   suppressHydrationWarning
                 >
-                  {loading ? "Processing..." : `Pay ₹${course.price}`}
+                  {loading ? "Processing..." : `Pay ₹${payableAmount.toFixed(2)}`}
                 </Button>
 
                 <p className="text-xs text-center text-gray-500 mt-4">

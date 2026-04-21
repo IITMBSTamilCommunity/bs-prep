@@ -30,7 +30,7 @@ const courseSyllabusData: Record<string, any> = {
   "qualifier-math-1": {
     title: "Mathematics for Data Science I",
     level: "qualifier",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     description: "Fundamental mathematics concepts for data science",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/math.png",
     syllabus: [
@@ -59,7 +59,7 @@ const courseSyllabusData: Record<string, any> = {
   "qualifier-stats-1": {
     title: "Statistics for Data Science I",
     level: "qualifier",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     description: "Introduction to statistical thinking and analysis",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/stats.png",
     syllabus: [
@@ -88,7 +88,7 @@ const courseSyllabusData: Record<string, any> = {
   "qualifier-computational-thinking": {
     title: "Computational Thinking",
     level: "qualifier",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     description: "Problem-solving and algorithmic thinking fundamentals",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/ct.png",
     syllabus: [
@@ -111,6 +111,35 @@ const courseSyllabusData: Record<string, any> = {
         week: 4,
         title: "Nested iterations",
         topics: "Birthday paradox, Binning"
+      }
+    ]
+  },
+  "qualifier-english-1": {
+    title: "English I",
+    level: "qualifier",
+    price: 129, originalPrice: 149,
+    description: "Build core spoken and written English skills for IITM BS.",
+    thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/english.png",
+    syllabus: [
+      {
+        week: 1,
+        title: "Sounds and Words",
+        topics: "Vowel and consonant sounds"
+      },
+      {
+        week: 2,
+        title: "Parts of Speech",
+        topics: "Nouns, pronouns, verbs, adjectives, adverbs and usage"
+      },
+      {
+        week: 3,
+        title: "Sentences",
+        topics: "Phrases and idioms"
+      },
+      {
+        week: 4,
+        title: "Speaking Skills",
+        topics: "Spoken English preliminaries"
       }
     ]
   }

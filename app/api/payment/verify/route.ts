@@ -6,19 +6,33 @@ import { constantTimeCompare } from "@/lib/validation";
 import { checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { sendCourseWelcomeEmail } from "@/lib/notifications/course-welcome-email";
 
-const coursePricing: Record<string, number> = {
-  "qualifier-math-1": 9900,
-  "qualifier-stats-1": 9900,
-  "qualifier-computational-thinking": 9900,
-  bundle: 24900,
+const GATEWAY_FEE_PERCENT = 2.5;
+
+function withGatewayFee(baseAmountPaise: number): number {
+  return Math.round(baseAmountPaise * (1 + GATEWAY_FEE_PERCENT / 100));
+}
+
+const courseBasePricing: Record<string, number> = {
+  "qualifier-math-1": 12900,
+  "qualifier-stats-1": 12900,
+  "qualifier-computational-thinking": 12900,
+  "qualifier-english-1": 12900,
+  bundle: 49900,
 };
+
+const payableCoursePricing: Record<string, number> = Object.fromEntries(
+  Object.entries(courseBasePricing).map(([courseId, amount]) => [courseId, withGatewayFee(amount)])
+) as Record<string, number>;
+
+const coursePricing: Record<string, number> = payableCoursePricing;
 
 const courseFallbackTitles: Record<string, string> = {
   "qualifier-math-1": "Mathematics 1",
   "qualifier-stats-1": "Statistics 1",
   "qualifier-computational-thinking": "Computational Thinking",
-  bundle: "Qualifier Bundle",
-}
+  "qualifier-english-1": "English I",
+  bundle: "Qualifier Bundle (4 Courses)",
+};
 
 function getRazorpayClient() {
   const keyId = process.env.RAZORPAY_KEY_ID;
@@ -235,6 +249,7 @@ export async function POST(request: NextRequest) {
               "qualifier-math-1",
               "qualifier-stats-1",
               "qualifier-computational-thinking",
+              "qualifier-english-1",
             ]
           : [expectedCourseId];
 
@@ -289,6 +304,7 @@ export async function POST(request: NextRequest) {
           "qualifier-math-1",
           "qualifier-stats-1",
           "qualifier-computational-thinking",
+          "qualifier-english-1",
         ]
       : [expectedCourseId];
 

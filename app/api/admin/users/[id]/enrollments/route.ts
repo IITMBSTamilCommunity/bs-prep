@@ -22,7 +22,7 @@ const courseTitleFallback: Record<string, string> = {
   "foundation-stats-2": "Statistics for Data Science II",
   "foundation-programming-python": "Programming in Python",
   "foundation-english-2": "English II",
-  bundle: "Qualifier Bundle",
+  bundle: "Qualifier Bundle (4 Courses)",
 }
 
 function formatFallbackTitle(courseId: string): string {

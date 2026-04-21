@@ -32,7 +32,7 @@ const BUNDLE_COURSES = [
     description: "Fundamental math concepts essential for data science",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/math.png",
     weeks: 4,
-    individualPrice: 499,
+    individualPrice: 149,
     syllabus: [
       { week: 1, title: "Set Theory - Number system, Sets and their operations", topics: "Relations and functions - Relations and their types, Functions and their types" },
       { week: 2, title: "Rectangular coordinate system, Straight Lines", topics: "Slope of a line, Parallel and perpendicular lines, Representations of a Line, General equations of a line, Straight-line fit" },
@@ -46,7 +46,7 @@ const BUNDLE_COURSES = [
     description: "Statistical thinking and analysis from the ground up",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/stats.png",
     weeks: 4,
-    individualPrice: 499,
+    individualPrice: 149,
     syllabus: [
       { week: 1, title: "Introduction and type of data", topics: "Types of data, Descriptive and Inferential statistics, Scales of measurement" },
       { week: 2, title: "Describing categorical data", topics: "Frequency distribution of categorical data, Best practices for graphing categorical data, Mode and median for categorical variable" },
@@ -60,7 +60,7 @@ const BUNDLE_COURSES = [
     description: "Problem-solving and algorithmic thinking fundamentals",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/ct.png",
     weeks: 4,
-    individualPrice: 499,
+    individualPrice: 149,
     syllabus: [
       { week: 1, title: "Variables, Initialization, Iterators, Filtering", topics: "Datatypes, Flowcharts, Sanity of data" },
       { week: 2, title: "Iteration, Filtering, Selection", topics: "Pseudocode, Finding max and min, AND operator" },
@@ -68,10 +68,26 @@ const BUNDLE_COURSES = [
       { week: 4, title: "Nested iterations", topics: "Birthday paradox, Binning" },
     ],
   },
+  {
+    id: "qualifier-english-1",
+    title: "English I",
+    description: "Build strong spoken and written English foundations",
+    thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/english.png",
+    weeks: 4,
+    individualPrice: 149,
+    syllabus: [
+      { week: 1, title: "Sounds and Words", topics: "Vowel and consonant sounds" },
+      { week: 2, title: "Parts of Speech", topics: "Nouns, pronouns, verbs, adjectives, adverbs and usage" },
+      { week: 3, title: "Sentences", topics: "Phrases and idioms" },
+      { week: 4, title: "Speaking Skills", topics: "Spoken English preliminaries" },
+    ],
+  },
 ]
 
-const BUNDLE_PRICE = 249
-const ORIGINAL_PRICE = BUNDLE_COURSES.reduce((s, c) => s + c.individualPrice, 0) // 1497
+const BUNDLE_PRICE = 499
+const ORIGINAL_PRICE = 599
+const GATEWAY_FEE_PERCENT = 2.5
+const PAYABLE_BUNDLE_PRICE = Number((BUNDLE_PRICE * (1 + GATEWAY_FEE_PERCENT / 100)).toFixed(2))
 
 export default function PackageDealPage() {
   const router = useRouter()
@@ -164,7 +180,7 @@ export default function PackageDealPage() {
         amount: orderData.amount,
         currency: "INR",
         name: "BSPrep",
-        description: "Qualifier Bundle — All 3 Courses",
+        description: "Qualifier Bundle — All 4 Courses",
         image: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/logo.jpeg",
         order_id: orderData.orderId,
         prefill: {
@@ -258,8 +274,8 @@ export default function PackageDealPage() {
             <Star className="w-3.5 h-3.5 text-[#51b206]" />
             <span className="text-xs font-bold text-[#51b206] uppercase tracking-wide">Best Value</span>
           </div>
-          <h1 className="text-3xl font-bold text-black mb-2">Qualifier Bundle — All 3 Courses</h1>
-          <p className="text-gray-600">Enroll in all 3 available qualifier courses at once and save ₹{ORIGINAL_PRICE - BUNDLE_PRICE}</p>
+          <h1 className="text-3xl font-bold text-black mb-2">Qualifier Bundle — All 4 Courses</h1>
+          <p className="text-gray-600">Enroll in all 4 available qualifier courses at once and save ₹{ORIGINAL_PRICE - BUNDLE_PRICE}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -329,9 +345,17 @@ export default function PackageDealPage() {
                     <span>Bundle discount</span>
                     <span>− ₹{ORIGINAL_PRICE - BUNDLE_PRICE}</span>
                   </div>
-                  <div className="flex justify-between text-xl font-extrabold text-black pt-2 border-t border-gray-200">
-                    <span>You pay</span>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Bundle price</span>
                     <span>₹{BUNDLE_PRICE}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Gateway fee ({GATEWAY_FEE_PERCENT}%)</span>
+                    <span>₹{(PAYABLE_BUNDLE_PRICE - BUNDLE_PRICE).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xl font-extrabold text-black pt-2 border-t border-gray-200">
+                    <span>Amount to pay</span>
+                    <span>₹{PAYABLE_BUNDLE_PRICE.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -341,7 +365,7 @@ export default function PackageDealPage() {
             <Card className="bg-white border border-gray-200 shadow-sm rounded-xl">
               <CardContent className="p-5 space-y-2.5">
                 {[
-                  "All 3 qualifier courses unlocked immediately",
+                  "All 4 qualifier courses unlocked immediately",
                   "Expert-led video lectures in Tamil",
                   "Practice assignments and quizzes for each course",
                   "Live doubt-clearing sessions",
@@ -411,7 +435,7 @@ export default function PackageDealPage() {
                   className="w-full bg-black hover:bg-black/80 text-white py-6 text-lg font-semibold"
                   suppressHydrationWarning
                 >
-                  {loading ? "Processing..." : `Pay ₹${BUNDLE_PRICE} for All 3 Courses`}
+                  {loading ? "Processing..." : `Pay ₹${PAYABLE_BUNDLE_PRICE.toFixed(2)} for All 4 Courses`}
                 </Button>
 
                 <p className="text-xs text-center text-gray-500 mt-4">

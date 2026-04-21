@@ -44,7 +44,7 @@ const courses: Course[] = [
     weeks: 4,
     description: "Master fundamental math concepts",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/math.png",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     available: true,
     withCertificate: true
   },
@@ -57,7 +57,7 @@ const courses: Course[] = [
     weeks: 4,
     description: "Learn statistical thinking & analysis",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/stats.png",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     available: true,
     withCertificate: true
   },
@@ -70,7 +70,7 @@ const courses: Course[] = [
     weeks: 4,
     description: "Build problem-solving skills",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/ct.png",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     available: true,
     withCertificate: true
   },
@@ -83,8 +83,8 @@ const courses: Course[] = [
     weeks: 4,
     description: "Essential communication skills",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/english.png",
-    price: 99, originalPrice: 499,
-    available: false,
+    price: 129, originalPrice: 149,
+    available: true,
     withCertificate: true
   },
   
@@ -98,7 +98,7 @@ const courses: Course[] = [
     weeks: 12,
     description: "Advanced mathematical concepts",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/math.png",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     available: false,
     withCertificate: true
   },
@@ -111,7 +111,7 @@ const courses: Course[] = [
     weeks: 12,
     description: "Advanced statistical methods",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/stats.png",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     available: false,
     withCertificate: true
   },
@@ -124,7 +124,7 @@ const courses: Course[] = [
     weeks: 12,
     description: "Python for data analysis",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/ct.png",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     available: false,
     withCertificate: true
   },
@@ -137,7 +137,7 @@ const courses: Course[] = [
     weeks: 12,
     description: "Advanced communication skills",
     thumbnail: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/courses/english.png",
-    price: 99, originalPrice: 499,
+    price: 129, originalPrice: 149,
     available: false,
     withCertificate: true
   }
@@ -280,14 +280,14 @@ export default function CoursesPage() {
                           </div>
                           <div>
                             <p className="text-xs font-semibold text-[#51b206] uppercase tracking-widest mb-0.5">Qualifier Bundle</p>
-                            <h3 className="text-xl font-extrabold text-black leading-tight">All 3 Courses — Package Deal</h3>
-                            <p className="text-sm text-gray-500 mt-0.5">Enroll in all 3 available qualifier courses at once</p>
+                            <h3 className="text-xl font-extrabold text-black leading-tight">All 4 Courses — Package Deal</h3>
+                            <p className="text-sm text-gray-500 mt-0.5">Enroll in all 4 available qualifier courses at once</p>
                           </div>
                         </div>
 
                         {/* Included Courses */}
                         <div className="flex flex-col gap-1.5 flex-1">
-                          {["Mathematics for Data Science I", "Statistics for Data Science I", "Computational Thinking"].map(name => (
+                          {["Mathematics for Data Science I", "Statistics for Data Science I", "Computational Thinking", "English I"].map(name => (
                             <div key={name} className="flex items-center gap-2">
                               <CheckCircle2 className="w-4 h-4 text-[#51b206] shrink-0" />
                               <span className="text-sm text-gray-700 font-medium">{name}</span>
@@ -298,9 +298,9 @@ export default function CoursesPage() {
                         {/* Price + CTA */}
                         <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
                           <div className="text-center md:text-right">
-                            <p className="text-xs text-gray-400 line-through">₹1497 (3 × ₹499)</p>
-                            <p className="text-4xl font-extrabold text-black">₹249</p>
-                            <p className="text-xs text-[#51b206] font-semibold">Save ₹1248</p>
+                            <p className="text-xs text-gray-400 line-through">₹599</p>
+                            <p className="text-4xl font-extrabold text-black">₹499</p>
+                            <p className="text-xs text-[#51b206] font-semibold">Save ₹100</p>
                           </div>
                           <span className="inline-block bg-[#51b206] text-white text-sm font-bold px-6 py-2.5 rounded-full group-hover:bg-[#3d8e04] transition-colors">
                             Get Package Deal

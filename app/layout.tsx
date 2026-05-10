@@ -34,6 +34,10 @@ export const metadata: Metadata = {
     "IITM BS community",
     "online degree prep",
     "BSPrep",
+    "IIT Madras BS Degree",
+    "IITM BS Quiz Prep",
+    "IITM BS Study Material",
+    "GPA Predictor IITM",
   ],
   applicationName: siteName,
   alternates: {
@@ -47,10 +51,10 @@ export const metadata: Metadata = {
     description: "Prepare smarter for IITM BS with GPA tools, notes, quiz prep, and community support.",
     images: [
       {
-        url: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/logo.jpeg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "BSPrep",
+        alt: "BSPrep - IITM BS Student Portal",
       },
     ],
   },
@@ -58,7 +62,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BSPrep | IITM BS Prep, GPA Tools, Notes and Community",
     description: "Prepare smarter for IITM BS with GPA tools, notes, quiz prep, and community support.",
-    images: ["https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/logo.jpeg"],
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -115,7 +119,7 @@ export default function RootLayout({
             "@type": "Organization",
             name: siteName,
             url: siteUrl,
-            logo: "https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/logo.jpeg",
+            logo: `${siteUrl}/og-image.png`,
             sameAs: [
               "https://www.linkedin.com/",
               "https://github.com/",

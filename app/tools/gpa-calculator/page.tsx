@@ -64,13 +64,27 @@ export default function GPACalculator() {
   const [semesterCourses, setSemesterCourses] = useState<SemesterCourse[]>([
     { id: "1", name: "", credits: 0, gradePoints: 0 },
   ])
+  const [existingCGPA, setExistingCGPA] = useState<number | "">("")
+  const [completedCredits, setCompletedCredits] = useState<number | "">("")
 
-  const semesterGPA = (() => {
+  const semesterResults = (() => {
     const validCourses = semesterCourses.filter((c) => c.credits > 0 && c.gradePoints > 0)
-    if (validCourses.length === 0) return null
     const totalCredits = validCourses.reduce((sum, course) => sum + course.credits, 0)
     const totalGradePoints = validCourses.reduce((sum, course) => sum + course.credits * course.gradePoints, 0)
-    return totalGradePoints / totalCredits
+    
+    if (totalCredits === 0) return null
+
+    const sgpa = totalGradePoints / totalCredits
+    
+    let updatedCGPA = null
+    if (existingCGPA !== "" && completedCredits !== "") {
+      const currentTotalPoints = Number(existingCGPA) * Number(completedCredits)
+      const newTotalPoints = currentTotalPoints + totalGradePoints
+      const newTotalCredits = Number(completedCredits) + totalCredits
+      updatedCGPA = newTotalPoints / newTotalCredits
+    }
+
+    return { sgpa, totalCredits, totalGradePoints, updatedCGPA }
   })()
 
   const availableLevels = selectedDegree
@@ -329,7 +343,48 @@ export default function GPACalculator() {
               <CardTitle className="text-2xl font-bold text-black">Calculate Semester GPA</CardTitle>
               <p className="text-gray-600 text-sm mt-1">Add your courses and grades to calculate your GPA</p>
             </CardHeader>
-            <CardContent className="space-y-5 pt-6">
+            <CardContent className="space-y-6 pt-6">
+              {/* Existing History */}
+              <div className="space-y-4 mb-8">
+                <h3 className="text-base font-bold text-black flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-gray-100 text-black flex items-center justify-center text-xs font-bold">1</div>
+                  Existing Academic Standing
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 border border-gray-200 rounded-lg p-5">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-black">Current CGPA</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 8.5"
+                      value={existingCGPA}
+                      onChange={(e) => setExistingCGPA(e.target.value === "" ? "" : Number(e.target.value))}
+                      className="h-12 text-base bg-white border-gray-300 focus:border-black transition-colors text-black"
+                      step="0.01"
+                      min="0"
+                      max="10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-black">Total Credits Completed</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 48"
+                      value={completedCredits}
+                      onChange={(e) => setCompletedCredits(e.target.value === "" ? "" : Number(e.target.value))}
+                      className="h-12 text-base bg-white border-gray-300 focus:border-black transition-colors text-black"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-black flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-md bg-gray-100 text-black flex items-center justify-center text-xs font-bold">2</div>
+                  Current Semester Courses
+                </h3>
+              </div>
+
               {/* Table Header */}
               <div className="grid grid-cols-12 gap-4 px-4 pb-2 border-b border-gray-200">
                 <div className="col-span-4">
@@ -408,27 +463,38 @@ export default function GPACalculator() {
                 Add Another Course
               </Button>
 
-              {semesterGPA !== null && (
+              {semesterResults !== null && (
                 <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-8">
-                  <div className="text-center mb-6">
-                    <p className="text-gray-700 text-sm uppercase tracking-wide mb-4 font-bold">Your Semester GPA</p>
-                    <p className="text-7xl font-black text-black mb-3">{semesterGPA.toFixed(2)}</p>
-                    <p className="text-xl font-bold text-gray-700">
-                      {semesterGPA >= 9 ? "🌟 Excellent Performance!" : semesterGPA >= 8 ? "✨ Very Good Work!" : semesterGPA >= 7 ? "👍 Good Progress!" : "📚 Keep Improving!"}
-                    </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-200">
+                    <div className="text-center pb-8 md:pb-0">
+                      <p className="text-gray-700 text-sm uppercase tracking-wide mb-4 font-bold">Semester GPA (SGPA)</p>
+                      <p className="text-7xl font-black text-black mb-3">{semesterResults.sgpa.toFixed(2)}</p>
+                      <p className="text-xl font-bold text-gray-700">
+                        {semesterResults.sgpa >= 9 ? "🌟 Excellent!" : semesterResults.sgpa >= 8 ? "✨ Very Good!" : semesterResults.sgpa >= 7 ? "👍 Good Work!" : "📚 Keep Going!"}
+                      </p>
+                    </div>
+                    
+                    {semesterResults.updatedCGPA !== null && (
+                      <div className="text-center pt-8 md:pt-0 md:pl-8">
+                        <p className="text-gray-700 text-sm uppercase tracking-wide mb-4 font-bold">Updated Total CGPA</p>
+                        <p className="text-7xl font-black text-black mb-3">{semesterResults.updatedCGPA.toFixed(2)}</p>
+                        <p className="text-sm font-semibold text-gray-500">Includes your current semester performance</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="grid grid-cols-3 gap-6 pt-6 border-t border-gray-200">
+
+                  <div className="grid grid-cols-3 gap-6 pt-8 mt-8 border-t border-gray-200">
                     <div className="text-center">
-                      <p className="text-gray-600 text-sm mb-2 font-semibold">Total Courses</p>
-                      <p className="text-3xl font-bold text-black">{semesterCourses.filter(c => c.credits > 0).length}</p>
+                      <p className="text-gray-600 text-sm mb-2 font-semibold">Courses</p>
+                      <p className="text-2xl font-bold text-black">{semesterResults.totalCredits > 0 ? semesterCourses.filter(c => c.credits > 0).length : 0}</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-gray-600 text-sm mb-2 font-semibold">Total Credits</p>
-                      <p className="text-3xl font-bold text-black">{semesterCourses.filter(c => c.credits > 0).reduce((sum, c) => sum + c.credits, 0)}</p>
+                      <p className="text-gray-600 text-sm mb-2 font-semibold">Credits</p>
+                      <p className="text-2xl font-bold text-black">{semesterResults.totalCredits}</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-gray-600 text-sm mb-2 font-semibold">Total Points</p>
-                      <p className="text-3xl font-bold text-black">{(semesterCourses.filter(c => c.credits > 0).reduce((sum, c) => sum + c.credits * c.gradePoints, 0)).toFixed(1)}</p>
+                      <p className="text-gray-600 text-sm mb-2 font-semibold">Points</p>
+                      <p className="text-2xl font-bold text-black">{semesterResults.totalGradePoints.toFixed(1)}</p>
                     </div>
                   </div>
                 </div>

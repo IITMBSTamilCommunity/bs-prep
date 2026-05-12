@@ -8,24 +8,19 @@ export function calculateScore(courseId: string, values: Record<string, number>)
     case "mds1":
     case "eng1":
     case "ct":
-      return Math.max(
+    case "eng2":
+      baseScore = Math.max(
         0.6 * values.F + 0.3 * Math.max(values.Qz1, values.Qz2),
         0.45 * values.F + 0.25 * values.Qz1 + 0.3 * values.Qz2,
       )
+      break
 
     case "mds2":
       baseScore = Math.max(
         0.6 * values.F + 0.3 * Math.max(values.Qz1, values.Qz2),
         0.45 * values.F + 0.25 * values.Qz1 + 0.3 * values.Qz2,
       )
-      // Add bonus (up to 6 marks, capped at 100)
-      return Math.min(baseScore + (values.Extra || 0), 100)
-
-    case "eng2":
-      return Math.max(
-        0.6 * values.F + 0.3 * Math.max(values.Qz1, values.Qz2),
-        0.45 * values.F + 0.25 * values.Qz1 + 0.3 * values.Qz2,
-      )
+      break
 
     case "stats1":
     case "stats2":
@@ -33,19 +28,16 @@ export function calculateScore(courseId: string, values: Record<string, number>)
         0.6 * values.F + 0.3 * Math.max(values.Qz1, values.Qz2),
         0.45 * values.F + 0.25 * values.Qz1 + 0.3 * values.Qz2,
       )
-      // Bonus only applied when passing (>= 40)
-      if (baseScore >= 40) {
-        baseScore += Math.min(5, values.Extra || 0)
-      }
-      return baseScore
+      break
 
     case "python":
-      return (
+      baseScore = (
         0.15 * values.Qz1 +
         0.4 * values.F +
         0.25 * Math.max(values.PE1, values.PE2) +
         0.2 * Math.min(values.PE1, values.PE2)
       )
+      break
 
     // Diploma Level
     case "mlf":
@@ -432,7 +424,7 @@ export function calculateScore(courseId: string, values: Record<string, number>)
   }
 
   // Apply bonus marks only if base score >= 40
-  const bonus = values.Bonus || 0
+  const bonus = values.Bonus || values.Extra || 0
   if (baseScore >= 40 && bonus > 0) {
     baseScore = Math.min(baseScore + bonus, 100)
   }

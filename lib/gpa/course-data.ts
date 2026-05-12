@@ -7,11 +7,12 @@ export const courseData: Course[] = [
     name: "Mathematics 1",
     degree: "data-science",
     level: "foundation",
-    formula: "T = max(0.6 * F + 0.3 * max(Qz1, Qz2), 0.45 * F + 0.25 * Qz1 + 0.3 * Qz2)",
+    formula: "T = max(0.6 * F + 0.3 * max(Qz1, Qz2), 0.45 * F + 0.25 * Qz1 + 0.3 * Qz2) + Bonus",
     formFields: [
       { id: "Qz1", label: "Quiz 1", description: "First Quiz Score", max: 100 },
       { id: "Qz2", label: "Quiz 2", description: "Second Quiz Score", max: 100 },
       { id: "F", label: "Final Exam", description: "Final Examination Score", max: 100 },
+      { id: "Extra", label: "Bonus", description: "Bonus Marks (max 5)", max: 5 },
     ],
   },
   {
@@ -19,11 +20,12 @@ export const courseData: Course[] = [
     name: "English 1",
     degree: "data-science",
     level: "foundation",
-    formula: "T = max(0.6 * F + 0.3 * max(Qz1, Qz2), 0.45 * F + 0.25 * Qz1 + 0.3 * Qz2)",
+    formula: "T = max(0.6 * F + 0.3 * max(Qz1, Qz2), 0.45 * F + 0.25 * Qz1 + 0.3 * Qz2) + Bonus",
     formFields: [
       { id: "Qz1", label: "Quiz 1", description: "First Quiz Score", max: 100 },
       { id: "Qz2", label: "Quiz 2", description: "Second Quiz Score", max: 100 },
       { id: "F", label: "Final Exam", description: "Final Examination Score", max: 100 },
+      { id: "Extra", label: "Bonus", description: "Bonus Marks (max 5)", max: 5 },
     ],
   },
   {
@@ -31,11 +33,12 @@ export const courseData: Course[] = [
     name: "Computational Thinking",
     degree: "data-science",
     level: "foundation",
-    formula: "T = max(0.6 * F + 0.3 * max(Qz1, Qz2), 0.45 * F + 0.25 * Qz1 + 0.3 * Qz2)",
+    formula: "T = max(0.6 * F + 0.3 * max(Qz1, Qz2), 0.45 * F + 0.25 * Qz1 + 0.3 * Qz2) + Bonus",
     formFields: [
       { id: "Qz1", label: "Quiz 1", description: "First Quiz Score", max: 100 },
       { id: "Qz2", label: "Quiz 2", description: "Second Quiz Score", max: 100 },
       { id: "F", label: "Final Exam", description: "Final Examination Score", max: 100 },
+      { id: "Extra", label: "Bonus", description: "Bonus Marks (max 5)", max: 5 },
     ],
   },
   {
@@ -82,11 +85,12 @@ export const courseData: Course[] = [
     name: "English 2",
     degree: "data-science",
     level: "foundation",
-    formula: "T = max(0.6 * F + 0.3 * max(Qz1, Qz2), 0.45 * F + 0.25 * Qz1 + 0.3 * Qz2)",
+    formula: "T = max(0.6 * F + 0.3 * max(Qz1, Qz2), 0.45 * F + 0.25 * Qz1 + 0.3 * Qz2) + Bonus",
     formFields: [
       { id: "Qz1", label: "Quiz 1", description: "First Quiz Score", max: 100 },
       { id: "Qz2", label: "Quiz 2", description: "Second Quiz Score", max: 100 },
       { id: "F", label: "Final Exam", description: "Final Examination Score", max: 100 },
+      { id: "Extra", label: "Bonus", description: "Bonus Marks (max 5)", max: 5 },
     ],
   },
   {
@@ -94,12 +98,13 @@ export const courseData: Course[] = [
     name: "Python Programming",
     degree: "data-science",
     level: "foundation",
-    formula: "T = 0.15 * Qz1 + 0.4 * F + 0.25 * max(PE1, PE2) + 0.2 * min(PE1, PE2)",
+    formula: "T = 0.15 * Qz1 + 0.4 * F + 0.25 * max(PE1, PE2) + 0.2 * min(PE1, PE2) + Bonus",
     formFields: [
       { id: "Qz1", label: "Quiz 1", description: "Quiz Score", max: 100 },
       { id: "F", label: "Final Exam", description: "Final Examination Score", max: 100 },
       { id: "PE1", label: "OPPE 1", description: "Online Programming Practice Exam 1", max: 100 },
       { id: "PE2", label: "OPPE 2", description: "Online Programming Practice Exam 2", max: 100 },
+      { id: "Extra", label: "Bonus", description: "Bonus Marks (max 5)", max: 5 },
     ],
   },
 

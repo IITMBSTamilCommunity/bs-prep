@@ -39,22 +39,22 @@ BSPrep is a full-stack web platform focused on helping IITM BS learners stay con
 ## Showcase
 
 ### Hero Section
-![Hero section](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/hero-section.png)
+![Hero section](public/readme/hero-section.png)
 
 ### Dashboard Preview
-![Dashboard preview](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/dashboard-preview.png)
+![Dashboard preview](public/readme/dashboard-preview.png)
 
 ### Payment Flow Preview
-![Payment flow preview](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/payment-preview.png)
+![Payment flow preview](public/readme/payment-preview.png)
 
 ### Courses Page
-![Courses page](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/courses-grid.png)
+![Courses page](public/readme/courses-grid.png)
 
 ### Why BSPrep
-![Community page](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/why-bsprep.png)
+![Community page](public/readme/why-bsprep.png)
 
 ### Compiler Preview
-![Compiler preview](https://cdn.jsdelivr.net/gh/PRODHOSH/bs-prep@main/public/readme/compiler-preview.png)
+![Compiler preview](public/readme/compiler-preview.png)
 
 
 ## Tech Stack
